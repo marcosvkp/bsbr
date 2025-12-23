@@ -1,9 +1,26 @@
 import flet as ft
 from app.colors import AppColors
+from app.config import AppConfig
 
 def AppDrawer(page: ft.Page):
     def drawer_change(e):
-        print(f"Drawer mudou para: {e.control.selected_index}")
+        # O índice do item selecionado
+        idx = e.control.selected_index
+        
+        # Mapeamento simples baseado na ordem dos itens
+        # 0: Inicio
+        # 1: Ranking
+        # 2: Discord
+        # 3: Sobre
+        
+        if idx == 2: # Discord
+            page.launch_url(AppConfig.DISCORD_LINK)
+            # Opcional: Resetar a seleção ou manter onde estava antes
+            e.control.selected_index = -1 
+            page.update()
+        else:
+            print(f"Navegar para índice: {idx}")
+            
         page.close(page.drawer)
 
     return ft.NavigationDrawer(
@@ -23,7 +40,7 @@ def AppDrawer(page: ft.Page):
             ),
             ft.NavigationDrawerDestination(
                 label="Discord",
-                icon=ft.Icons.DISCORD_OUTLINED,
+                icon=ft.Icons.DISCORD, # Flet não tem ícone oficial do Discord no Material Icons padrão, usando um genérico ou similar se não houver
                 selected_icon=ft.Icon(ft.Icons.DISCORD, color=AppColors.PRIMARY),
             ),
             ft.Divider(thickness=2),
@@ -34,5 +51,5 @@ def AppDrawer(page: ft.Page):
             ),
         ],
         bgcolor=AppColors.SURFACE,
-        indicator_color=AppColors.SURFACE, # Para não ficar com fundo estranho na seleção
+        indicator_color=AppColors.SURFACE,
     )

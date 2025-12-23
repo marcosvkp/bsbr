@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Configuração do Caminho do Banco
 DB_FOLDER = "storage"
-DB_NAME = "pdv.db"
+DB_NAME = "bsbr.db"
 DB_PATH = os.path.join(os.getcwd(), DB_FOLDER, DB_NAME)
 CONNECTION_STRING = f"sqlite:///{DB_PATH}"
 
