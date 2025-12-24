@@ -1,3 +1,5 @@
+import json
+
 import flet as ft
 from app.colors import AppColors
 from app.views.home_view import HomeView
@@ -6,6 +8,8 @@ from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
 
+from app.ppcalc import rank_calculator
+
 def main(page: ft.Page):
     page.title = "BeatSaber Brasil"
     page.theme_mode = ft.ThemeMode.DARK
@@ -13,6 +17,9 @@ def main(page: ft.Page):
     page.bgcolor = AppColors.BACKGROUND
 
     init_db()
+
+    rankbr = rank_calculator()
+    print(json.dumps(rankbr))
 
     # Configura o Drawer (Menu lateral para mobile)
     page.drawer = AppDrawer(page)
