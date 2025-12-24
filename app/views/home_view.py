@@ -25,6 +25,7 @@ def HomeView(page: ft.Page):
                     color=AppColors.BACKGROUND, # Texto escuro no amarelo para contraste
                     icon=ft.Icons.LEADERBOARD,
                     icon_color=AppColors.BACKGROUND,
+                    on_click=lambda _: page.go("/ranking"),
                     height=50,
                     style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
                 ),

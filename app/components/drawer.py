@@ -4,22 +4,19 @@ from app.config import AppConfig
 
 def AppDrawer(page: ft.Page):
     def drawer_change(e):
-        # O índice do item selecionado
         idx = e.control.selected_index
         
-        # Mapeamento simples baseado na ordem dos itens
-        # 0: Inicio
-        # 1: Ranking
-        # 2: Discord
-        # 3: Sobre
-        
-        if idx == 2: # Discord
+        if idx == 0: # Inicio
+            page.go("/")
+        elif idx == 1: # Ranking
+            page.go("/ranking")
+        elif idx == 2: # Discord
             page.launch_url(AppConfig.DISCORD_LINK)
-            # Opcional: Resetar a seleção ou manter onde estava antes
             e.control.selected_index = -1 
             page.update()
-        else:
-            print(f"Navegar para índice: {idx}")
+        elif idx == 3: # Sobre
+            # page.go("/sobre")
+            pass
             
         page.close(page.drawer)
 
@@ -30,24 +27,24 @@ def AppDrawer(page: ft.Page):
             ft.NavigationDrawerDestination(
                 label="Inicio",
                 icon=ft.Icons.HOME_OUTLINED,
-                selected_icon=ft.Icon(ft.Icons.HOME, color=AppColors.PRIMARY),
+                selected_icon=ft.Icons.HOME, # Corrigido: selected_icon_content -> selected_icon
             ),
             ft.Divider(thickness=2),
             ft.NavigationDrawerDestination(
                 label="Ranking",
                 icon=ft.Icons.LEADERBOARD_OUTLINED,
-                selected_icon=ft.Icon(ft.Icons.LEADERBOARD, color=AppColors.PRIMARY),
+                selected_icon=ft.Icons.LEADERBOARD, # Corrigido
             ),
             ft.NavigationDrawerDestination(
                 label="Discord",
-                icon=ft.Icons.DISCORD, # Flet não tem ícone oficial do Discord no Material Icons padrão, usando um genérico ou similar se não houver
-                selected_icon=ft.Icon(ft.Icons.DISCORD, color=AppColors.PRIMARY),
+                icon=ft.Icons.DISCORD, 
+                selected_icon=ft.Icons.DISCORD, # Corrigido
             ),
             ft.Divider(thickness=2),
             ft.NavigationDrawerDestination(
                 label="Sobre",
                 icon=ft.Icons.INFO_OUTLINED,
-                selected_icon=ft.Icon(ft.Icons.INFO, color=AppColors.PRIMARY),
+                selected_icon=ft.Icons.INFO, # Corrigido
             ),
         ],
         bgcolor=AppColors.SURFACE,
