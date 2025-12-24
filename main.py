@@ -4,12 +4,15 @@ from app.views.home_view import HomeView
 from app.views.ranking_view import RankingView
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
+from app.data.database import init_db
 
 def main(page: ft.Page):
     page.title = "BeatSaber Brasil"
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 0
     page.bgcolor = AppColors.BACKGROUND
+
+    init_db()
 
     # Configura o Drawer (Menu lateral para mobile)
     page.drawer = AppDrawer(page)
