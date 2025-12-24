@@ -15,7 +15,7 @@ def AppDrawer(page: ft.Page):
             e.control.selected_index = -1 
             page.update()
         elif idx == 3: # Sobre
-            # page.go("/sobre")
+            page.go("/about")
             pass
             
         page.close(page.drawer)

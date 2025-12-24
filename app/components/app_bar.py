@@ -9,19 +9,16 @@ def NavBar(page: ft.Page):
     def discord_click(e):
         page.launch_url(AppConfig.DISCORD_LINK)
 
-    def ranking_click(e):
-        page.go("/ranking")
-
     def open_drawer(e):
         page.open(page.drawer)
 
     # Botões de navegação (Desktop)
     nav_buttons = ft.Row(
         [
-            ft.TextButton("Inicio", on_click=nav_click, style=ft.ButtonStyle(color=AppColors.TEXT)),
-            ft.TextButton("Ranking", on_click=ranking_click, style=ft.ButtonStyle(color=AppColors.TEXT)),
+            ft.TextButton("Inicio", on_click=lambda _: page.go("/"), style=ft.ButtonStyle(color=AppColors.TEXT)),
+            ft.TextButton("Ranking", on_click=lambda _: page.go("/ranking"), style=ft.ButtonStyle(color=AppColors.TEXT)),
             ft.TextButton("Discord", on_click=discord_click, style=ft.ButtonStyle(color=AppColors.TEXT)),
-            ft.TextButton("Sobre", on_click=nav_click, style=ft.ButtonStyle(color=AppColors.TEXT)),
+            ft.TextButton("Sobre", on_click=lambda _: page.go("/about"), style=ft.ButtonStyle(color=AppColors.TEXT)),
         ],
         alignment=ft.MainAxisAlignment.CENTER,
     )

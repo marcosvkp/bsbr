@@ -175,6 +175,7 @@ def RankingView(page: ft.Page):
     # Container Principal
     return ft.Column(
         [
+            ft.Divider(color=AppColors.SURFACE),
             ft.ResponsiveRow(
                 [
                     score_saber_col,
