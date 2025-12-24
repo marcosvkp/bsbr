@@ -1,50 +1,26 @@
 import flet as ft
 from app.colors import AppColors
-from app.ppcalc import rank_calculator
+from app.data.data_manager import DataManager
 import math
 
 def RankingView(page: ft.Page):
-    # --- Carregamento de Dados Reais ---
-    # Nota: Em um app real, isso deveria ser assíncrono para não travar a UI
-    # Por enquanto, vamos chamar diretamente, mas idealmente usaria um loading state
+    # --- Carregamento de Dados do Cache ---
     
-    # Dados fictícios para ScoreSaber e Mapas (ainda não implementados na API)
-    def generate_ranking_data(prefix, count):
-        return [
-            {"pos": i + 1, "name": f"{prefix} Player {i + 1}", "pp": f"{20000 - (i * 100)}pp"}
-            for i in range(count)
-        ]
-
-    def generate_maps_data(count):
-        diffs = ["Expert+", "Expert", "Hard"]
-        return [
-            {"name": f"Beat Saber Map {i + 1}", "diff": diffs[i % 3], "stars": f"{12 - (i * 0.2):.1f}★"}
-            for i in range(count)
-        ]
-
-    scoresaber_data = generate_ranking_data("Global", 50)
-    maps_data = generate_maps_data(42)
-
-    # Dados Reais do Ranking BR
-    try:
-        # Chama o calculador que baixa scores e processa
-        # Isso pode demorar um pouco dependendo da quantidade de mapas
-        bsbr_result = rank_calculator()
-        raw_bsbr_ranking = bsbr_result["ranking"]
-        
-        # Formata para o padrão da view
-        bsbr_data = []
-        for player in raw_bsbr_ranking:
-            bsbr_data.append({
-                "pos": player["rank"],
-                "name": player["name"],
-                "pp": f"{player['total_pp']:.2f}pp"
-            })
-            
-    except Exception as e:
-        print(f"Erro ao calcular ranking BR: {e}")
-        bsbr_data = [] # Fallback vazio ou erro visual
-
+    # Lê diretamente do DataManager (Singleton)
+    # Se os dados ainda estiverem carregando (primeira execução), as listas estarão vazias
+    # Podemos mostrar um aviso se estiver vazio e carregando
+    
+    scoresaber_data = DataManager.scoresaber_data
+    bsbr_data = DataManager.bsbr_data
+    maps_data = DataManager.maps_data
+    
+    # Se não tiver dados e estiver carregando, podemos mostrar um loading (opcional)
+    # Mas como o Flet constrói a UI, se estiver vazio vai mostrar "Nenhum dado encontrado"
+    # O ideal seria um Timer na página para verificar se os dados chegaram e atualizar a UI,
+    # mas para simplificar, vamos assumir que o usuário pode navegar e voltar ou recarregar.
+    
+    # Dica: Se quiser reatividade em tempo real quando os dados chegarem, precisaria usar PubSub ou um Timer.
+    
     # --- Componentes de Item ---
     def create_ranking_item(pos, name, pp, color=AppColors.TEXT):
         return ft.Container(
@@ -126,7 +102,17 @@ def RankingView(page: ft.Page):
 
         def update_list_view(self):
             if not self.all_data:
-                self.list_column.controls = [ft.Text("Nenhum dado encontrado.", color=AppColors.TEXT_SECONDARY)]
+                msg = "Carregando dados..." if DataManager.is_loading else "Nenhum dado encontrado."
+                self.list_column.controls = [
+                    ft.Container(
+                        content=ft.Column([
+                            ft.ProgressRing() if DataManager.is_loading else ft.Icon(ft.Icons.WARNING_AMBER, color=AppColors.TEXT_SECONDARY),
+                            ft.Text(msg, color=AppColors.TEXT_SECONDARY)
+                        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        alignment=ft.alignment.center,
+                        padding=20
+                    )
+                ]
                 return
 
             start = (self.current_page - 1) * self.items_per_page
@@ -187,8 +173,18 @@ def RankingView(page: ft.Page):
         is_ranking=False
     )
 
+    # Adiciona um botão de refresh manual ou info de última atualização
+    last_update_text = "Atualizando..."
+    if DataManager.last_updated:
+        last_update_text = f"Última atualização: {DataManager.last_updated.strftime('%H:%M:%S')}"
+    
     return ft.Column(
         [
+            ft.Container(
+                content=ft.Text(last_update_text, size=12, color=AppColors.TEXT_SECONDARY),
+                alignment=ft.alignment.center_right,
+                padding=ft.padding.only(right=20, top=10)
+            ),
             ft.Divider(color=AppColors.SURFACE),
             ft.ResponsiveRow(
                 [

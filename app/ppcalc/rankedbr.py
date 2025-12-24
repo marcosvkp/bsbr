@@ -7,6 +7,49 @@ class ScoreSaberAPI:
     BASE_URL = "https://scoresaber.com/api"
 
     @staticmethod
+    def get_players(country: str = "BR") -> List[Dict[str, Any]]:
+        """
+        Busca o ranking de jogadores de um país específico.
+        """
+        all_players = []
+        page = 1
+        
+        while True:
+            url = f"{ScoreSaberAPI.BASE_URL}/players"
+            params = {
+                "countries": country,
+                "page": page,
+                "withMetadata": "true"
+            }
+            
+            try:
+                response = requests.get(url, params=params, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                
+                players = data.get("players", [])
+                if not players:
+                    break
+                    
+                all_players.extend(players)
+                
+                metadata = data.get("metadata", {})
+                total_items = metadata.get("total", 0)
+                items_per_page = metadata.get("itemsPerPage", 0)
+                
+                # Se já pegamos tudo, para
+                if len(all_players) >= total_items or items_per_page == 0:
+                    break
+                
+                page += 1
+                
+            except requests.exceptions.RequestException as e:
+                print(f"Erro ao buscar jogadores página {page}: {e}")
+                break
+                
+        return all_players
+
+    @staticmethod
     def _fetch_page(leaderboard_id: int, country: str, page: int) -> List[Dict[str, Any]]:
         """
         Função auxiliar para buscar uma página específica.
@@ -90,10 +133,3 @@ class ScoreSaberAPI:
         all_scores.sort(key=lambda x: x.get("rank", float('inf')))
         
         return all_scores
-
-# Exemplo de uso:
-# if __name__ == "__main__":
-#     scores = ScoreSaberAPI.get_leaderboard_scores(684641)
-#     print(f"Total de scores recuperados: {len(scores)}")
-#     for score in scores[:5]:
-#         print(f"#{score['rank']} - {score['leaderboardPlayerInfo']['name']}: {score['baseScore']}")

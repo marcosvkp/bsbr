@@ -1,5 +1,3 @@
-import json
-
 import flet as ft
 from app.colors import AppColors
 from app.views.home_view import HomeView
@@ -7,8 +5,7 @@ from app.views.ranking_view import RankingView
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
-
-from app.ppcalc import rank_calculator
+from app.data.data_manager import DataManager
 
 def main(page: ft.Page):
     page.title = "BeatSaber Brasil"
@@ -16,10 +13,12 @@ def main(page: ft.Page):
     page.padding = 0
     page.bgcolor = AppColors.BACKGROUND
 
+    # Inicializa o Banco de Dados
     init_db()
 
-    rankbr = rank_calculator()
-    print(json.dumps(rankbr))
+    # Inicia o gerenciador de dados em background (Cache + Auto Update)
+    # Isso vai começar a baixar os dados imediatamente sem travar a UI
+    DataManager.start_background_updater()
 
     # Configura o Drawer (Menu lateral para mobile)
     page.drawer = AppDrawer(page)
