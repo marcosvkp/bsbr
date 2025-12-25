@@ -46,6 +46,8 @@ class DataManager:
             new_scoresaber = []
             for player in raw_players:
                 new_scoresaber.append({
+                    "id": player["id"],
+                    "profilePicture": player["profilePicture"],
                     "pos": player["countryRank"],
                     "name": player["name"],
                     "pp": f"{player['pp']}pp"
@@ -60,6 +62,8 @@ class DataManager:
                 new_bsbr.append({
                     "pos": player["rank"],
                     "name": player["name"],
+                    "id": player["id"],
+                    "profilePicture": player["profilePicture"],
                     "pp": f"{player['total_pp']:.2f}pp"
                 })
             
@@ -73,6 +77,7 @@ class DataManager:
                 # Formata a dificuldade para exibição
                 diff_name = m.difficulty.replace("Plus", "+") if m.difficulty else "?"
                 new_maps.append({
+                    "leaderboard_id": m.leaderboard_id,
                     "name": m.map_name,
                     "diff": diff_name,
                     "stars": f"{m.stars:.2f}★"

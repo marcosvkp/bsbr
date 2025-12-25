@@ -7,6 +7,7 @@ class RankedBRMaps(Base):
 
     leaderboard_id = Column(String, primary_key=True, index=True)
     difficulty = Column(String, nullable=False, default="ExpertPlus")
+    map_id = Column(String, nullable=False)
     map_name = Column(String, nullable=False)
     map_author = Column(String, nullable=False)
     stars = Column(DECIMAL, nullable=False)

@@ -66,4 +66,5 @@ def main(page: ft.Page):
     # Chama o resize uma vez para ajustar o estado inicial
     page_resize(None)
 
-ft.app(target=main)
+# Adicionado assets_dir="assets" para que o Flet encontre a pasta de imagens
+ft.app(target=main, assets_dir="assets")

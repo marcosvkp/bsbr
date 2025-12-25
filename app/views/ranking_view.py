@@ -5,32 +5,81 @@ import math
 
 def RankingView(page: ft.Page):
     # --- Carregamento de Dados do Cache ---
-    
-    # Lê diretamente do DataManager (Singleton)
-    # Se os dados ainda estiverem carregando (primeira execução), as listas estarão vazias
-    # Podemos mostrar um aviso se estiver vazio e carregando
-    
     scoresaber_data = DataManager.scoresaber_data
     bsbr_data = DataManager.bsbr_data
     maps_data = DataManager.maps_data
     
-    # Se não tiver dados e estiver carregando, podemos mostrar um loading (opcional)
-    # Mas como o Flet constrói a UI, se estiver vazio vai mostrar "Nenhum dado encontrado"
-    # O ideal seria um Timer na página para verificar se os dados chegaram e atualizar a UI,
-    # mas para simplificar, vamos assumir que o usuário pode navegar e voltar ou recarregar.
-    
-    # Dica: Se quiser reatividade em tempo real quando os dados chegarem, precisaria usar PubSub ou um Timer.
-    
     # --- Componentes de Item ---
-    def create_ranking_item(pos, name, pp, color=AppColors.TEXT):
+    def create_ranking_item(pos, name, pp, profile_picture=None, player_id=None, color=AppColors.TEXT):
+        # Cria o avatar (imagem ou ícone padrão)
+        avatar_content = ft.Icon(ft.Icons.PERSON, color=AppColors.TEXT_SECONDARY)
+        if profile_picture:
+            avatar_content = ft.Image(
+                src=profile_picture,
+                width=30,
+                height=30,
+                border_radius=ft.border_radius.all(15), # Redondo
+                fit=ft.ImageFit.COVER,
+                error_content=ft.Icon(ft.Icons.PERSON, color=AppColors.TEXT_SECONDARY)
+            )
+        
+        avatar_container = ft.Container(
+            content=avatar_content,
+            width=30,
+            height=30,
+            border_radius=15,
+            clip_behavior=ft.ClipBehavior.HARD_EDGE
+        )
+
+        # Botão ScoreSaber (Logo SVG Local)
+        # Nota: Para usar assets locais no Flet, eles devem estar na pasta 'assets' na raiz do projeto
+        # e referenciados como '/nome_do_arquivo'.
+        ss_button = ft.Container(
+            content=ft.Text("SS", size=18),
+            on_click=lambda e: page.launch_url(f"https://scoresaber.com/u/{player_id}") if player_id else None,
+            tooltip="Ver perfil no ScoreSaber",
+            padding=5,
+            border_radius=5,
+            ink=True, 
+        )
+
+        # Botão Brasil (Perfil Local - Futuro)
+        br_button = ft.Container(
+            content=ft.Text("🇧🇷", size=18),
+            on_click=lambda e: print(f"Navegar para perfil local de {name} ({player_id})"), 
+            tooltip="Ver perfil no BSBR",
+            padding=5,
+            border_radius=5,
+            ink=True,
+        )
+
         return ft.Container(
             content=ft.Row(
                 [
+                    # Posição
                     ft.Text(f"#{pos}", weight=ft.FontWeight.BOLD, color=AppColors.SECONDARY, width=35),
-                    ft.Text(name, weight=ft.FontWeight.BOLD, color=color, expand=True),
+                    
+                    # Avatar + Nome + Botões
+                    ft.Row(
+                        [
+                            avatar_container,
+                            ft.Text(name, weight=ft.FontWeight.BOLD, color=color, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                            # Espaçador pequeno
+                            ft.Container(width=5),
+                            # Botões de Ação
+                            br_button,
+                            ss_button,
+                        ],
+                        expand=True,
+                        spacing=0, 
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER
+                    ),
+                    
+                    # PP
                     ft.Text(pp, color=AppColors.TEXT_SECONDARY, size=12),
                 ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
             padding=ft.padding.symmetric(vertical=5),
             border=ft.border.only(bottom=ft.BorderSide(1, AppColors.SURFACE))
@@ -122,7 +171,9 @@ def RankingView(page: ft.Page):
             self.list_column.controls.clear()
             for item in current_items:
                 if self.is_ranking:
-                    control = self.item_creator(item["pos"], item["name"], item["pp"], self.title_color)
+                    pfp = item.get("profilePicture")
+                    pid = item.get("id")
+                    control = self.item_creator(item["pos"], item["name"], item["pp"], pfp, pid, self.title_color)
                 else:
                     control = self.item_creator(item)
                 self.list_column.controls.append(control)

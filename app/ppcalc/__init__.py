@@ -52,6 +52,7 @@ def rank_calculator():
             if player_name not in player_infos:
                 player_infos[player_name] = {
                     "id": player_id,
+                    "profilePicture": score['leaderboardPlayerInfo']['profilePicture'],
                     "name": player_name,
                     "country": score['leaderboardPlayerInfo'].get('country', 'BR')
                 }
