@@ -80,7 +80,8 @@ class DataManager:
                     "leaderboard_id": m.leaderboard_id,
                     "name": m.map_name,
                     "diff": diff_name,
-                    "stars": f"{m.stars:.2f}★"
+                    "stars": f"{m.stars:.2f}★",
+                    "cover_image": m.cover_image
                 })
 
             # Atualização Atômica (substitui as listas antigas pelas novas)

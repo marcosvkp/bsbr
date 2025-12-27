@@ -32,10 +32,14 @@ def RankingView(page: ft.Page):
         )
 
         # Botão ScoreSaber (Logo SVG Local)
-        # Nota: Para usar assets locais no Flet, eles devem estar na pasta 'assets' na raiz do projeto
-        # e referenciados como '/nome_do_arquivo'.
         ss_button = ft.Container(
-            content=ft.Text("SS", size=18),
+            content=ft.Image(
+                src="/scoresaber_logo.png",
+                width=20,
+                height=20,
+                fit=ft.ImageFit.CONTAIN,
+                color=AppColors.TEXT if page.theme_mode == ft.ThemeMode.LIGHT else None
+            ),
             on_click=lambda e: page.launch_url(f"https://scoresaber.com/u/{player_id}") if player_id else None,
             tooltip="Ver perfil no ScoreSaber",
             padding=5,
@@ -63,10 +67,9 @@ def RankingView(page: ft.Page):
                     ft.Row(
                         [
                             avatar_container,
+                            ft.Container(width=10), 
                             ft.Text(name, weight=ft.FontWeight.BOLD, color=color, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                            # Espaçador pequeno
-                            ft.Container(width=5),
-                            # Botões de Ação
+                            ft.Container(width=10), 
                             br_button,
                             ss_button,
                         ],
@@ -86,13 +89,54 @@ def RankingView(page: ft.Page):
         )
 
     def create_map_item(data):
+        # Cria a imagem de capa (quadrada com bordas arredondadas)
+        cover_content = ft.Icon(ft.Icons.MUSIC_NOTE, color=AppColors.TEXT_SECONDARY)
+        if data.get('cover_image'):
+            cover_content = ft.Image(
+                src=data['cover_image'],
+                width=40,
+                height=40,
+                border_radius=ft.border_radius.all(5),
+                fit=ft.ImageFit.COVER,
+                error_content=ft.Icon(ft.Icons.MUSIC_NOTE, color=AppColors.TEXT_SECONDARY)
+            )
+            
+        cover_container = ft.Container(
+            content=cover_content,
+            width=40,
+            height=40,
+            border_radius=5,
+            clip_behavior=ft.ClipBehavior.HARD_EDGE
+        )
+
         return ft.Container(
-            content=ft.Column(
+            content=ft.Row(
                 [
-                    ft.Text(f"{data['name']} ({data['diff']})", weight=ft.FontWeight.BOLD, color=AppColors.TEXT),
-                    ft.Text(f"Dificuldade: {data['stars']}", color=AppColors.SECONDARY, size=12),
+                    # Capa
+                    cover_container,
+                    
+                    # Espaçamento
+                    ft.Container(width=10),
+                    
+                    # Informações do Mapa
+                    ft.Column(
+                        [
+                            ft.Text(f"{data['name']}", weight=ft.FontWeight.BOLD, color=AppColors.TEXT, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                            ft.Row(
+                                [
+                                    ft.Text(f"{data['diff']}", color=AppColors.SECONDARY, size=12),
+                                    ft.Text("•", color=AppColors.TEXT_SECONDARY, size=12),
+                                    ft.Text(f"{data['stars']}", color=AppColors.SECONDARY, size=12, weight=ft.FontWeight.BOLD),
+                                ],
+                                spacing=5
+                            )
+                        ],
+                        spacing=2,
+                        expand=True,
+                        alignment=ft.MainAxisAlignment.CENTER
+                    ),
                 ],
-                spacing=2
+                vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
             padding=ft.padding.symmetric(vertical=5),
             border=ft.border.only(bottom=ft.BorderSide(1, AppColors.SURFACE))

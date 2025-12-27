@@ -62,6 +62,7 @@ def rank_calculator():
                 "player_name": player_name,
                 "player_id": player_id,
                 "score": score['modifiedScore'],
+                "timeSet": score['timeSet'],
                 "accuracy": round(accuracy, 2),
                 "pp": pp
             })

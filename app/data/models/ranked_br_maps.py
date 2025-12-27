@@ -12,3 +12,4 @@ class RankedBRMaps(Base):
     map_author = Column(String, nullable=False)
     stars = Column(DECIMAL, nullable=False)
     max_score = Column(Integer, nullable=False, default=0, server_default='0')
+    cover_image = Column(String, nullable=True)
