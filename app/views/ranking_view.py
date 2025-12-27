@@ -8,6 +8,10 @@ def RankingView(page: ft.Page):
     scoresaber_data = DataManager.scoresaber_data
     bsbr_data = DataManager.bsbr_data
     maps_data = DataManager.maps_data
+
+    def page_go_update(player_id):
+        page.launch_url(f"https://scoresaber.com/u/{player_id}")
+        page.update()
     
     # --- Componentes de Item ---
     def create_ranking_item(pos, name, pp, profile_picture=None, player_id=None, color=AppColors.TEXT):
@@ -35,10 +39,10 @@ def RankingView(page: ft.Page):
         ss_button = ft.Container(
             content=ft.Image(
                 src="/scoresaber_logo.png",
-                width=20,
-                height=20,
+                width=15,
+                height=15,
                 fit=ft.ImageFit.CONTAIN,
-                color=AppColors.TEXT if page.theme_mode == ft.ThemeMode.LIGHT else None
+                color=AppColors.TEXT if page.theme_mode == ft.ThemeMode.LIGHT else None 
             ),
             on_click=lambda e: page.launch_url(f"https://scoresaber.com/u/{player_id}") if player_id else None,
             tooltip="Ver perfil no ScoreSaber",
@@ -49,8 +53,14 @@ def RankingView(page: ft.Page):
 
         # Botão Brasil (Perfil Local - Futuro)
         br_button = ft.Container(
-            content=ft.Text("🇧🇷", size=18),
-            on_click=lambda e: print(f"Navegar para perfil local de {name} ({player_id})"), 
+            content=ft.Image(
+                src="/br.png",
+                width=15,
+                height=15,
+                fit=ft.ImageFit.CONTAIN,
+                color=AppColors.TEXT if page.theme_mode == ft.ThemeMode.LIGHT else None
+            ),
+            on_click=lambda e: page.go(f"/player/{player_id}") if player_id else None,
             tooltip="Ver perfil no BSBR",
             padding=5,
             border_radius=5,

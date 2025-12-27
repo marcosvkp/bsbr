@@ -155,7 +155,7 @@ def get_raw_pp_for_weighted_pp_gain(scores_pps: List[float], expected_pp: float)
     return new_total - old_total
 
 
-"""pp = get_pp(stars=8.5, accuracy=98.2)
+"""pp = get_pp(stars=7.7, accuracy=97.9)
 print(pp)
 
 print(get_total_weighted_pp([

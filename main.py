@@ -2,6 +2,7 @@ import flet as ft
 from app.colors import AppColors
 from app.views.home_view import HomeView
 from app.views.ranking_view import RankingView
+from app.views.player_view import PlayerView
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
@@ -17,7 +18,6 @@ def main(page: ft.Page):
     init_db()
 
     # Inicia o gerenciador de dados em background (Cache + Auto Update)
-    # Isso vai começar a baixar os dados imediatamente sem travar a UI
     DataManager.start_background_updater()
 
     # Configura o Drawer (Menu lateral para mobile)
@@ -47,9 +47,16 @@ def main(page: ft.Page):
 
     # Sistema de Rotas
     def route_change(e):
-        # Determina qual view mostrar baseado na rota
-        if page.route == "/ranking":
+        troute = ft.TemplateRoute(page.route)
+        
+        if troute.match("/"):
+            content_area.content = HomeView(page)
+        elif troute.match("/ranking"):
             content_area.content = RankingView(page)
+        elif troute.match("/player/:player_id"):
+            # Extrai o ID da rota e passa para a view
+            player_id = troute.player_id
+            content_area.content = PlayerView(page, player_id)
         else:
             content_area.content = HomeView(page)
             
@@ -57,7 +64,7 @@ def main(page: ft.Page):
 
     page.on_route_change = route_change
 
-    # Adiciona apenas a área de conteúdo à página (a AppBar já está configurada na propriedade page.appbar)
+    # Adiciona apenas a área de conteúdo à página
     page.add(content_area)
     
     # Força a navegação inicial para a Home
@@ -66,5 +73,4 @@ def main(page: ft.Page):
     # Chama o resize uma vez para ajustar o estado inicial
     page_resize(None)
 
-# Adicionado assets_dir="assets" para que o Flet encontre a pasta de imagens
 ft.app(target=main, assets_dir="assets")
