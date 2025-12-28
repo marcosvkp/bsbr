@@ -1,10 +1,37 @@
 import requests
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class ScoreSaberAPI:
     BASE_URL = "https://scoresaber.com/api"
+
+    @staticmethod
+    def get_player_full(player_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Busca o perfil completo de um jogador específico.
+        
+        Args:
+            player_id (str): O ID do jogador no ScoreSaber.
+            
+        Returns:
+            Optional[Dict[str, Any]]: Dicionário com os dados do jogador ou None se não for encontrado.
+        """
+        url = f"{ScoreSaberAPI.BASE_URL}/player/{player_id}/full"
+        
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                print(f"Jogador com ID {player_id} não encontrado.")
+            else:
+                print(f"Erro HTTP ao buscar jogador {player_id}: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"Erro de conexão ao buscar jogador {player_id}: {e}")
+            return None
 
     @staticmethod
     def get_players(country: str = "BR") -> List[Dict[str, Any]]:
@@ -37,7 +64,6 @@ class ScoreSaberAPI:
                 total_items = metadata.get("total", 0)
                 items_per_page = metadata.get("itemsPerPage", 0)
                 
-                # Se já pegamos tudo, para
                 if len(all_players) >= total_items or items_per_page == 0:
                     break
                 
@@ -73,21 +99,9 @@ class ScoreSaberAPI:
         """
         Busca TODOS os scores de um leaderboard específico filtrado por país.
         Utiliza multi-threading para buscar várias páginas simultaneamente.
-        
-        Args:
-            leaderboard_id (int): O ID do leaderboard (mapa).
-            country (str): Código do país (padrão "BR").
-            max_workers (int): Número máximo de threads simultâneas.
-            
-        Returns:
-            List[Dict[str, Any]]: Lista completa de scores dos jogadores.
         """
-        # 1. Busca a primeira página para obter metadados (total de páginas)
         url = f"{ScoreSaberAPI.BASE_URL}/leaderboard/by-id/{leaderboard_id}/scores"
-        params = {
-            "countries": country,
-            "page": 1
-        }
+        params = {"countries": country, "page": 1}
         
         try:
             response = requests.get(url, params=params, timeout=10)
@@ -103,7 +117,6 @@ class ScoreSaberAPI:
         total_items = metadata.get("total", 0)
         items_per_page = metadata.get("itemsPerPage", 0)
         
-        # Se não houver itens ou paginação, retorna o que temos
         if total_items == 0 or items_per_page == 0:
             return all_scores
 
@@ -112,13 +125,9 @@ class ScoreSaberAPI:
         if total_pages <= 1:
             return all_scores
 
-        # 2. Se houver mais páginas, dispara threads para buscar o restante
-        print(f"Encontradas {total_pages} páginas. Iniciando download multi-thread...")
-        
         pages_to_fetch = range(2, total_pages + 1)
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Mapeia cada future para o número da página (para debug se necessário)
             future_to_page = {
                 executor.submit(ScoreSaberAPI._fetch_page, leaderboard_id, country, page): page 
                 for page in pages_to_fetch
@@ -128,8 +137,6 @@ class ScoreSaberAPI:
                 page_scores = future.result()
                 all_scores.extend(page_scores)
 
-        # 3. Ordena os scores pelo rank para garantir a consistência após o merge das threads
-        # O rank vem da API, então confiamos nele.
         all_scores.sort(key=lambda x: x.get("rank", float('inf')))
         
         return all_scores

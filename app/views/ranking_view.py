@@ -116,7 +116,9 @@ def RankingView(page: ft.Page):
             width=40,
             height=40,
             border_radius=5,
-            clip_behavior=ft.ClipBehavior.HARD_EDGE
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            on_click=lambda e: page.launch_url(f"https://beatsaver.com/maps/{data['id']}"),
+            tooltip="Ver no BeatSaver"
         )
 
         return ft.Container(

@@ -70,6 +70,7 @@ class DataManager:
                     "leaderboard_id": m.leaderboard_id,
                     "name": m.map_name,
                     "diff": diff_name,
+                    "id": m.map_id,
                     "stars": f"{m.stars:.2f}★",
                     "cover_image": m.cover_image
                 }
@@ -142,13 +143,14 @@ class DataManager:
         ss_info = next((p for p in cls.scoresaber_data if p["id"] == player_id), None)
         
         if not ss_info:
-            return None
+            ss_info = ScoreSaberAPI.get_player_full(player_id)
+            if ss_info is None:
+                return None
+            ss_info["pos"] = 0
 
         # Agora, buscamos dados opcionais
         bsbr_info = next((p for p in cls.bsbr_data if p["id"] == player_id), None)
         detail = cls.player_details.get(player_id)
-
-        print(ss_info)
         
         # Monta o perfil final
         player_profile = {
