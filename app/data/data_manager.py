@@ -44,7 +44,14 @@ class DataManager:
             # 2. Mapas Rankeados (Vindo do Banco de Dados)
             print("DataManager: Buscando Mapas do Banco de Dados...")
             db = next(get_db())
-            maps_db = db.query(RankedBRMaps).all()
+            maps_db = (
+                db.query(RankedBRMaps)
+                .order_by(
+                    RankedBRMaps.map_name.asc(),# depois por nome
+                    RankedBRMaps.stars.desc()  # primeiro ordena por estrelas (rating)
+                )
+                .all()
+            )
             maps_lookup = {m.leaderboard_id: {"leaderboard_id": m.leaderboard_id, "name": m.map_name, "diff": m.difficulty.replace("Plus", "+") if m.difficulty else "?", "stars": f"{m.stars:.2f}★", "cover_image": m.cover_image} for m in maps_db}
             new_maps = list(maps_lookup.values())
 

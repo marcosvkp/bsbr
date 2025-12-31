@@ -40,39 +40,42 @@ def PlayerView(page: ft.Page, player_id: str):
                 ft.Text(info["name"], size=32, weight=ft.FontWeight.BOLD, color=AppColors.TEXT),
                 
                 # Badges de Ranking e Medalhas
-                ft.Row(
-                    [
-                        # Ranking BR
-                        ft.Container(
-                            content=ft.Row([
-                                ft.Image(src="/br.png", width=20, height=20, fit=ft.ImageFit.CONTAIN),
-                                ft.Text("BSBR Rank:", color=AppColors.TEXT_SECONDARY, size=14),
-                                ft.Text(f"#{player_data['bsbr_rank']}", color=AppColors.PRIMARY, weight=ft.FontWeight.BOLD, size=16),
-                                ft.Text(f"({player_data['bsbr_pp']})", color=AppColors.TEXT_SECONDARY, size=12)
-                            ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                            bgcolor=AppColors.SURFACE, padding=10, border_radius=8
-                        ),
-                        # Ranking SS
-                        ft.Container(
-                            content=ft.Row([
-                                ft.Image(src="/scoresaber_logo.png", width=20, height=20, fit=ft.ImageFit.CONTAIN),
-                                ft.Text("SS BR Rank:", color=AppColors.TEXT_SECONDARY, size=14),
-                                ft.Text(f"#{player_data['ss_rank']}", color=AppColors.SECONDARY, weight=ft.FontWeight.BOLD, size=16),
-                                ft.Text(f"({player_data['ss_pp']})", color=AppColors.TEXT_SECONDARY, size=12)
-                            ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                            bgcolor=AppColors.SURFACE, padding=10, border_radius=8
-                        ),
-                        # Medalhas
-                        ft.Container(
-                            content=ft.Row([
-                                ft.Icon(ft.Icons.MILITARY_TECH, color=AppColors.SECONDARY),
-                                ft.Text("Medalhas:", color=AppColors.TEXT_SECONDARY, size=14),
-                                ft.Text(f"{player_data['total_medals']}", color=AppColors.SECONDARY, weight=ft.FontWeight.BOLD, size=16),
-                            ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-                            bgcolor=AppColors.SURFACE, padding=10, border_radius=8
-                        )
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER, spacing=10
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            # Ranking BR
+                            ft.Container(
+                                content=ft.Row([
+                                    ft.Image(src="/br.png", width=20, height=20, fit=ft.ImageFit.CONTAIN),
+                                    ft.Text("BSBR Rank:", color=AppColors.TEXT_SECONDARY, size=14),
+                                    ft.Text(f"#{player_data['bsbr_rank']}", color=AppColors.PRIMARY, weight=ft.FontWeight.BOLD, size=16),
+                                    ft.Text(f"({player_data['bsbr_pp']})", color=AppColors.TEXT_SECONDARY, size=12)
+                                ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                                bgcolor=AppColors.SURFACE, padding=10, border_radius=8
+                            ),
+                            # Ranking SS
+                            ft.Container(
+                                content=ft.Row([
+                                    ft.Image(src="/scoresaber_logo.png", width=20, height=20, fit=ft.ImageFit.CONTAIN),
+                                    ft.Text("SS BR Rank:", color=AppColors.TEXT_SECONDARY, size=14),
+                                    ft.Text(f"#{player_data['ss_rank']}", color=AppColors.SECONDARY, weight=ft.FontWeight.BOLD, size=16),
+                                    ft.Text(f"({player_data['ss_pp']})", color=AppColors.TEXT_SECONDARY, size=12)
+                                ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                                bgcolor=AppColors.SURFACE, padding=10, border_radius=8
+                            ),
+                            # Medalhas
+                            ft.Container(
+                                content=ft.Row([
+                                    ft.Icon(ft.Icons.MILITARY_TECH, color=AppColors.SECONDARY),
+                                    ft.Text("Medalhas:", color=AppColors.TEXT_SECONDARY, size=14),
+                                    ft.Text(f"{player_data['total_medals']}", color=AppColors.SECONDARY, weight=ft.FontWeight.BOLD, size=16),
+                                ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                                bgcolor=AppColors.SURFACE, padding=10, border_radius=8
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER, spacing=10, wrap=True, run_spacing=10
+                    ),
+                    width=600 # Limita a largura para forçar wrap apenas em telas pequenas
                 )
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=15
@@ -91,39 +94,56 @@ def PlayerView(page: ft.Page, player_id: str):
             width=50, height=50, border_radius=5, clip_behavior=ft.ClipBehavior.HARD_EDGE
         )
         
+        map_info = ft.Column(
+            [
+                ft.Text(score["map_name"], weight=ft.FontWeight.BOLD, color=AppColors.TEXT, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                ft.Row(
+                    [
+                        ft.Text(score["diff"], color=AppColors.SECONDARY, size=12),
+                        ft.Text("•", color=AppColors.TEXT_SECONDARY),
+                        ft.Text(score["stars"], color=AppColors.SECONDARY, size=12, weight=ft.FontWeight.BOLD)
+                    ],
+                    spacing=5,
+                    wrap=True
+                )
+            ],
+            expand=True, spacing=2
+        )
+
+        score_info = ft.Column(
+            [
+                ft.Text(f"{score['pp']:.2f}pp", weight=ft.FontWeight.BOLD, color=AppColors.PRIMARY, size=16),
+                ft.Text(f"({score['weighted_pp']:.2f}pp)", color=AppColors.TEXT_SECONDARY, size=12),
+                ft.Text(f"{score['acc']:.2f}%", color=AppColors.TEXT_SECONDARY, size=12)
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.END, spacing=0
+        )
+        
         return ft.Container(
-            content=ft.Row(
+            content=ft.ResponsiveRow(
                 [
-                    # Posição no Mapa
-                    ft.Text(f"#{score['map_rank']}", width=30, size=16, weight=ft.FontWeight.BOLD, color=AppColors.SECONDARY),
-                    cover,
-                    ft.Container(width=10),
-                    # Info do Mapa
-                    ft.Column(
-                        [
-                            ft.Text(score["map_name"], weight=ft.FontWeight.BOLD, color=AppColors.TEXT, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                            ft.Row(
-                                [
-                                    ft.Text(score["diff"], color=AppColors.SECONDARY, size=12),
-                                    ft.Text("•", color=AppColors.TEXT_SECONDARY),
-                                    ft.Text(score["stars"], color=AppColors.SECONDARY, size=12, weight=ft.FontWeight.BOLD)
-                                ],
-                                spacing=5
-                            )
-                        ],
-                        expand=True, spacing=2
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                # Posição no Mapa
+                                ft.Text(f"#{score['map_rank']}", width=30, size=16, weight=ft.FontWeight.BOLD, color=AppColors.SECONDARY),
+                                cover,
+                                ft.Container(width=10),
+                                # Info do Mapa
+                                map_info
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+                        col={"xs": 12, "md": 8}
                     ),
-                    # Info do Score
-                    ft.Column(
-                        [
-                            ft.Text(f"{score['pp']:.2f}pp", weight=ft.FontWeight.BOLD, color=AppColors.PRIMARY, size=16),
-                            ft.Text(f"({score['weighted_pp']:.2f}pp)", color=AppColors.TEXT_SECONDARY, size=12),
-                            ft.Text(f"{score['acc']:.2f}%", color=AppColors.TEXT_SECONDARY, size=12)
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.END, spacing=0
+                    ft.Container(
+                        content=score_info,
+                        col={"xs": 12, "md": 4},
+                        alignment=ft.alignment.center_right
                     )
                 ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
             padding=10, bgcolor=AppColors.SURFACE, border_radius=8, margin=ft.margin.only(bottom=5)
         )
@@ -194,6 +214,7 @@ def PlayerView(page: ft.Page, player_id: str):
                 PaginatedScores(scores)
             ],
             expand=True,
+            scroll=ft.ScrollMode.AUTO # Adiciona scroll à coluna principal
         ),
         padding=20
     )
