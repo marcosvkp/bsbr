@@ -169,14 +169,14 @@ class ScoreSaberAPI:
         return all_scores
 
     @staticmethod
-    def _fetch_player_scores_page(player_id: str, page: int, limit: int = 100) -> List[Dict[str, Any]]:
+    def _fetch_player_scores_page(player_id: str, page: int, limit: int = 100, sort: str = "top") -> List[Dict[str, Any]]:
         """
         Busca uma página de scores de um jogador.
         """
         url = f"{ScoreSaberAPI.BASE_URL}/player/{player_id}/scores"
         params = {
             "limit": limit,
-            "sort": "top",
+            "sort": sort,
             "page": page
         }
         try:
@@ -186,7 +186,6 @@ class ScoreSaberAPI:
             if response.status_code == 429:
                 print(f"Rate limit atingido (429) para jogador {player_id} página {page}. Aguardando 5s...")
                 time.sleep(5)
-                # Tenta novamente uma vez
                 rate_limiter.wait()
                 response = requests.get(url, params=params, timeout=10)
 
@@ -198,22 +197,23 @@ class ScoreSaberAPI:
             return []
 
     @staticmethod
-    def get_player_scores(player_id: str, limit: int = 100, max_pages: Optional[int] = None, max_workers: int = 5) -> List[Dict[str, Any]]:
+    def get_player_scores(player_id: str, limit: int = 100, max_pages: Optional[int] = None, max_workers: int = 5, sort: str = "top") -> List[Dict[str, Any]]:
         """
-        Busca os scores de um jogador (Top Scores).
+        Busca os scores de um jogador.
         
         Args:
             player_id (str): ID do jogador.
             limit (int): Scores por página (máx 100).
             max_pages (Optional[int]): Quantas páginas buscar. Se None, busca todas.
             max_workers (int): Threads simultâneas.
+            sort (str): 'top' ou 'recent'.
             
         Returns:
             List[Dict[str, Any]]: Lista de scores do jogador.
         """
         # Busca a primeira página para saber o total
         url = f"{ScoreSaberAPI.BASE_URL}/player/{player_id}/scores"
-        params = {"limit": limit, "sort": "top", "page": 1}
+        params = {"limit": limit, "sort": sort, "page": 1}
         
         try:
             rate_limiter.wait()
@@ -248,7 +248,7 @@ class ScoreSaberAPI:
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_page = {
-                executor.submit(ScoreSaberAPI._fetch_player_scores_page, player_id, page, limit): page 
+                executor.submit(ScoreSaberAPI._fetch_player_scores_page, player_id, page, limit, sort): page 
                 for page in pages_to_fetch
             }
             
@@ -256,7 +256,9 @@ class ScoreSaberAPI:
                 page_scores = future.result()
                 all_scores.extend(page_scores)
 
-        # Ordena por PP (já deve vir ordenado, mas garante)
-        all_scores.sort(key=lambda x: x["score"]["pp"], reverse=True)
+        # Ordena se necessário (se for top, já vem ordenado, mas threads podem embaralhar)
+        if sort == "top":
+            all_scores.sort(key=lambda x: x["score"]["pp"], reverse=True)
+        # Se for recent, não necessariamente precisamos ordenar aqui, mas a API já manda ordenado por página
         
         return all_scores

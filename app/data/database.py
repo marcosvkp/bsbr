@@ -29,4 +29,5 @@ def init_db():
     """Cria as tabelas no banco de dados."""
     # Importar os models aqui para que o Base os reconheça
     from app.data.models.ranked_br_maps import RankedBRMaps
+    from app.data.models.player_score import PlayerScore
     Base.metadata.create_all(bind=engine)
