@@ -13,6 +13,7 @@ class DataManager:
     bsbr_data = []
     maps_data = []
     player_details = {}
+    global_scores_cache = {} # Cache para scores globais: {player_id: [scores]}
     
     last_updated = None
     is_loading = False
@@ -61,7 +62,7 @@ class DataManager:
             
             new_bsbr = [{"pos": p["rank"], "name": p["name"], "id": p["id"], "profilePicture": p["profilePicture"], "pp": f"{p['total_pp']:.2f}pp"} for p in bsbr_result["ranking"]]
             
-            # 4. Processamento Detalhado por Jogador
+            # 4. Processamento Detalhado por Jogador (Mapas BR)
             new_player_details = defaultdict(lambda: {"scores": [], "total_medals": 0})
             map_scores = bsbr_result.get("map_scores", {})
 
@@ -115,12 +116,66 @@ class DataManager:
                 for i, score in enumerate(details["scores"]):
                     score["weighted_pp"] = score["pp"] * (0.965 ** i)
 
+            # 5. Atualização de Scores Globais (Assíncrono/Sob demanda seria melhor, mas vamos tentar carregar para os top players)
+            # Para evitar sobrecarga, vamos carregar apenas se a lista estiver vazia ou em intervalos maiores.
+            # Por enquanto, vamos deixar o carregamento sob demanda na view ou carregar aqui para os top 50.
+            print("DataManager: Iniciando busca de scores globais para Top 50...")
+            new_global_scores = {}
+            
+            # Pega os top 50 do ranking BR oficial (ScoreSaber)
+            # Para buscar scores globais, precisamos do ID do jogador.
+            # raw_players já tem essa informação.
+            top_players = raw_players[:50] # Usa raw_players para ter acesso a rankedPlayCount se disponível, ou apenas id
+            
+            # Função auxiliar para thread
+            def fetch_player_global(player):
+                pid = player["id"]
+                try:
+                    # Busca TODOS os scores (max_pages=None)
+                    # Isso pode demorar, então cuidado com o rate limit
+                    scores = ScoreSaberAPI.get_player_scores(pid, limit=100, max_pages=None)
+                    processed_scores = []
+                    for s in scores:
+                        leaderboard = s["leaderboard"]
+                        score_data = s["score"]
+                        
+                        # Ignora scores com 0 pp
+                        if score_data["pp"] <= 0:
+                            continue
+
+                        processed_scores.append({
+                            "map_name": leaderboard["songName"],
+                            "map_cover": leaderboard["coverImage"],
+                            "diff": leaderboard["difficulty"]["difficultyRaw"], # Ex: _ExpertPlus_SoloStandard
+                            "stars": f"{leaderboard['stars']}★",
+                            "acc": (score_data["baseScore"] / leaderboard["maxScore"]) * 100 if leaderboard["maxScore"] > 0 else 0,
+                            "pp": score_data["pp"],
+                            "score": score_data["baseScore"],
+                            "map_rank": score_data["rank"]
+                        })
+                    return pid, processed_scores
+                except Exception as e:
+                    print(f"Erro ao buscar scores globais para {pid}: {e}")
+                    return pid, []
+
+            # Executa em paralelo
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            # Aumentei max_workers para 10 para agilizar, já que o rate limiter controla as requisições
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = {executor.submit(fetch_player_global, p): p for p in top_players}
+                for future in as_completed(futures):
+                    pid, scores = future.result()
+                    if scores:
+                        new_global_scores[pid] = scores
+                        print(f"DataManager: Scores globais carregados para {pid} ({len(scores)} scores)")
+
             # Atualização Atômica
             with cls._lock:
                 cls.scoresaber_data = new_scoresaber
                 cls.bsbr_data = new_bsbr
                 cls.maps_data = new_maps
                 cls.player_details = new_player_details
+                cls.global_scores_cache = new_global_scores # Atualiza o cache global
                 cls.last_updated = datetime.now()
                 cls.is_loading = False
                 print(f"DataManager: Dados atualizados com sucesso em {cls.last_updated}")

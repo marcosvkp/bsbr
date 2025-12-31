@@ -3,6 +3,7 @@ from app.colors import AppColors
 from app.views.home_view import HomeView
 from app.views.ranking_view import RankingView
 from app.views.player_view import PlayerView
+from app.views.stars_ranking_view import StarsRankingView
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
@@ -53,6 +54,8 @@ def main(page: ft.Page):
             content_area.content = HomeView(page)
         elif troute.match("/ranking"):
             content_area.content = RankingView(page)
+        elif troute.match("/stars"):
+            content_area.content = StarsRankingView(page)
         elif troute.match("/player/:player_id"):
             # Extrai o ID da rota e passa para a view
             player_id = troute.player_id

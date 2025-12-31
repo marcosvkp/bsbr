@@ -19,16 +19,32 @@ def HomeView(page: ft.Page):
                     text_align=ft.TextAlign.CENTER
                 ),
                 ft.Container(height=20),
-                ft.ElevatedButton(
-                    "Ver Ranking", 
-                    bgcolor=AppColors.SECONDARY, # Amarelo
-                    color=AppColors.BACKGROUND, # Texto escuro no amarelo para contraste
-                    icon=ft.Icons.LEADERBOARD,
-                    icon_color=AppColors.BACKGROUND,
-                    on_click=lambda _: page.go("/ranking"),
-                    height=50,
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
-                ),
+                ft.Row(
+                    [
+                        ft.ElevatedButton(
+                            "Ver Ranking", 
+                            bgcolor=AppColors.SECONDARY, # Amarelo
+                            color=AppColors.BACKGROUND, # Texto escuro no amarelo para contraste
+                            icon=ft.Icons.LEADERBOARD,
+                            icon_color=AppColors.BACKGROUND,
+                            on_click=lambda _: page.go("/ranking"),
+                            height=50,
+                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        ),
+                        ft.ElevatedButton(
+                            "Stars Ranking", 
+                            bgcolor=AppColors.PRIMARY, 
+                            color=AppColors.BACKGROUND, 
+                            icon=ft.Icons.STAR,
+                            icon_color=AppColors.BACKGROUND,
+                            on_click=lambda _: page.go("/stars"),
+                            height=50,
+                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=20
+                )
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
