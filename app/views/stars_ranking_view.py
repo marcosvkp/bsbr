@@ -241,7 +241,7 @@ def StarsRankingView(page: ft.Page):
             [
                 ft.Row(
                     [
-                        ft.IconButton(ft.Icons.ARROW_BACK, on_click=lambda e: page.go("/ranking"), icon_color=AppColors.TEXT),
+                        ft.IconButton(ft.Icons.ARROW_BACK, on_click=lambda e: page.go("/"), icon_color=AppColors.TEXT),
                         ft.Text("Stars Ranking (Top 1 PP)", size=20, weight=ft.FontWeight.BOLD, color=AppColors.TEXT),
                     ],
                     vertical_alignment=ft.CrossAxisAlignment.CENTER

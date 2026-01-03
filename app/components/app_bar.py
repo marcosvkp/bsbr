@@ -17,6 +17,7 @@ def NavBar(page: ft.Page):
         [
             ft.TextButton("Inicio", on_click=lambda _: page.go("/"), style=ft.ButtonStyle(color=AppColors.TEXT)),
             ft.TextButton("Ranking", on_click=lambda _: page.go("/ranking"), style=ft.ButtonStyle(color=AppColors.TEXT)),
+            ft.TextButton("Star Ranking", on_click=lambda _: page.go("/stars"), style=ft.ButtonStyle(color=AppColors.TEXT)),
             ft.TextButton("Discord", on_click=discord_click, style=ft.ButtonStyle(color=AppColors.TEXT)),
             ft.TextButton("Sobre", on_click=lambda _: page.go("/about"), style=ft.ButtonStyle(color=AppColors.TEXT)),
         ],

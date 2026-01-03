@@ -11,10 +11,12 @@ def AppDrawer(page: ft.Page):
         elif idx == 1: # Ranking
             page.go("/ranking")
         elif idx == 2: # Discord
+            page.go("/stars")
+        elif idx == 3: # Discord
             page.launch_url(AppConfig.DISCORD_LINK)
-            e.control.selected_index = -1 
+            e.control.selected_index = -1
             page.update()
-        elif idx == 3: # Sobre
+        elif idx == 4: # Sobre
             page.go("/about")
             pass
             
@@ -34,6 +36,11 @@ def AppDrawer(page: ft.Page):
                 label="Ranking",
                 icon=ft.Icons.LEADERBOARD_OUTLINED,
                 selected_icon=ft.Icons.LEADERBOARD, # Corrigido
+            ),
+            ft.NavigationDrawerDestination(
+                label="Star Ranking",
+                icon=ft.Icons.STAR,
+                selected_icon=ft.Icons.LEADERBOARD,  # Corrigido
             ),
             ft.NavigationDrawerDestination(
                 label="Discord",
