@@ -1,5 +1,6 @@
 import requests
 import sys
+from collections import defaultdict
 from sqlalchemy.orm import Session
 from app.data.database import engine, SessionLocal
 from app.data.models.ranked_br_maps import RankedBRMaps
@@ -47,6 +48,50 @@ def difficulty_int_to_str(diff_int):
         9: "ExpertPlus"
     }
     return mapping.get(diff_int, str(diff_int))
+
+def list_current_ranked_maps():
+    """Lista todos os mapas rankeados atualmente no banco de dados."""
+    db = SessionLocal()
+    try:
+        maps = db.query(RankedBRMaps).all()
+        
+        if not maps:
+            print("Nenhum mapa rankeado encontrado no banco de dados.")
+            return
+
+        # Agrupa por map_id (BeatSaver Key)
+        grouped_maps = defaultdict(list)
+        map_details = {} # map_id -> {name, author}
+
+        for m in maps:
+            grouped_maps[m.map_id].append(m)
+            if m.map_id not in map_details:
+                map_details[m.map_id] = {
+                    "name": m.map_name,
+                    "author": m.map_author
+                }
+
+        print(f"\n--- Mapas Rankeados BR Atuais ({len(grouped_maps)} mapas, {len(maps)} dificuldades) ---\n")
+
+        # Ordena por nome do mapa
+        sorted_keys = sorted(grouped_maps.keys(), key=lambda k: map_details[k]["name"].lower())
+
+        for map_id in sorted_keys:
+            details = map_details[map_id]
+            diffs = grouped_maps[map_id]
+            
+            # Ordena dificuldades por estrelas (decrescente)
+            diffs.sort(key=lambda x: float(x.stars), reverse=True)
+            
+            print(f"[{map_id}] {details['name']} - {details['author']}")
+            for d in diffs:
+                print(f"  - {d.difficulty}: {d.stars:.2f}★ (ID: {d.leaderboard_id})")
+            print("") # Linha em branco entre mapas
+
+    except Exception as e:
+        print(f"Erro ao listar mapas: {e}")
+    finally:
+        db.close()
 
 def add_ranked_map():
     print("--- Adicionar Mapa Rankeado BR ---")
@@ -180,4 +225,7 @@ def add_ranked_map():
     print("\nProcesso finalizado.")
 
 if __name__ == "__main__":
-    add_ranked_map()
+    if len(sys.argv) > 1 and sys.argv[1] == "-atual":
+        list_current_ranked_maps()
+    else:
+        add_ranked_map()

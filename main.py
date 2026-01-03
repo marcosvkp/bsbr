@@ -1,3 +1,5 @@
+import os
+
 import flet as ft
 from app.colors import AppColors
 from app.views.home_view import HomeView
@@ -8,6 +10,9 @@ from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
 from app.data.data_manager import DataManager
+
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 def main(page: ft.Page):
     page.title = "BeatSaber Brasil"
@@ -75,5 +80,16 @@ def main(page: ft.Page):
     
     # Chama o resize uma vez para ajustar o estado inicial
     page_resize(None)
+
+fastapi_app = FastAPI()
+
+@fastapi_app.get("/download/bsbr-playlist")
+def download_bsbr_playlist():
+    filepath = os.path.join("assets", "bsbr_ranked.bplist")
+    return FileResponse(
+        path=filepath,
+        media_type="application/octet-stream",
+        filename="bsbr_ranked.bplist"
+    )
 
 ft.app(target=main, assets_dir="assets")

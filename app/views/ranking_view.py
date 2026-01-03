@@ -1,6 +1,9 @@
 import flet as ft
+import os
+import time
 from app.colors import AppColors
 from app.data.data_manager import DataManager
+from app.playlist.generator import generate_bsbr_playlist
 import math
 
 def RankingView(page: ft.Page):
@@ -12,6 +15,104 @@ def RankingView(page: ft.Page):
     def page_go_update(player_id):
         page.launch_url(f"https://scoresaber.com/u/{player_id}")
         page.update()
+        
+    def download_playlist(e):
+        """Gera e baixa a playlist."""
+        try:
+            # Gera o JSON
+            # Tenta inferir a URL base se estiver na web
+            base_url = ""
+            if page.web:
+                # Em produção, você pode definir isso manualmente se necessário
+                # page.route não dá o domínio, então deixamos vazio ou configurável
+                pass
+                
+            playlist_json = generate_bsbr_playlist(base_url=base_url)
+            
+            if not playlist_json:
+                page.snack_bar = ft.SnackBar(ft.Text("Erro ao gerar playlist."), bgcolor=AppColors.ERROR)
+                page.snack_bar.open = True
+                page.update()
+                return
+
+            # Lógica Diferenciada: Web vs Desktop
+            if page.web:
+                # --- MODO WEB ---
+                # Salva no servidor (assets) e entrega o link
+                # Adiciona timestamp para evitar cache
+                filename = f"bsbr_ranked.bplist"
+                filepath = os.path.join("assets", filename)
+                
+                # Limpa arquivos antigos (opcional, para não encher o disco)
+                try:
+                    for f in os.listdir("assets"):
+                        if f.startswith("bsbr_ranked_") and f.endswith(".bplist"):
+                            os.remove(os.path.join("assets", f))
+                except:
+                    pass
+
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(playlist_json)
+                
+                # Abre o link
+                page.launch_url(f"/{filename}")
+                
+                # Mostra aviso explicativo
+                def close_dlg(e):
+                    dlg.open = False
+                    page.update()
+
+                dlg = ft.AlertDialog(
+                    title=ft.Text("Download Iniciado"),
+                    content=ft.Column([
+                        ft.Text("A playlist foi gerada."),
+                        ft.Text("Se o arquivo abrir como texto no navegador, clique com o botão direito na página e escolha 'Salvar como...' ou use Ctrl+S."),
+                        ft.Text(f"Arquivo: {filename}", size=12, color=AppColors.TEXT_SECONDARY)
+                    ], tight=True),
+                    actions=[
+                        ft.TextButton("OK", on_click=close_dlg),
+                        ft.TextButton("Abrir Novamente", on_click=lambda _: page.launch_url(f"/{filename}"))
+                    ],
+                )
+                page.dialog = dlg
+                dlg.open = True
+                page.update()
+
+            else:
+                # --- MODO DESKTOP ---
+                # Usa FilePicker para salvar localmente
+                if not hasattr(page, "playlist_picker"):
+                    page.playlist_picker = ft.FilePicker(on_result=lambda e: save_file_result(e, playlist_json))
+                    page.overlay.append(page.playlist_picker)
+                    page.update()
+                
+                page.playlist_picker.save_file(
+                    initial_directory="Downloads",
+                    file_name="bsbr_ranked.bplist",
+                    allowed_extensions=["bplist", "json"]
+                )
+            
+        except Exception as ex:
+            print(f"Erro no download: {ex}")
+            page.snack_bar = ft.SnackBar(ft.Text("Erro ao iniciar download."), bgcolor=AppColors.ERROR)
+            page.snack_bar.open = True
+            page.update()
+
+    def save_file_result(e: ft.FilePickerResultEvent, content: str):
+        """Callback quando o usuário escolhe onde salvar (Apenas Desktop)."""
+        if e.path:
+            try:
+                with open(e.path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                
+                page.snack_bar = ft.SnackBar(ft.Text(f"Playlist salva em {e.path}"), bgcolor=AppColors.PRIMARY)
+                page.snack_bar.open = True
+                page.update()
+            except Exception as ex:
+                print(f"Erro ao salvar arquivo: {ex}")
+                page.snack_bar = ft.SnackBar(ft.Text("Erro ao salvar arquivo."), bgcolor=AppColors.ERROR)
+                page.snack_bar.open = True
+                page.update()
     
     # --- Componentes de Item ---
     def create_ranking_item(pos, name, pp, profile_picture=None, player_id=None, color=AppColors.TEXT):
@@ -156,7 +257,7 @@ def RankingView(page: ft.Page):
 
     # --- Lógica de Paginação ---
     class PaginatedSection(ft.Container):
-        def __init__(self, title, icon, data, item_creator_func, items_per_page=10, title_color=AppColors.TEXT, is_ranking=True):
+        def __init__(self, title, icon, data, item_creator_func, items_per_page=10, title_color=AppColors.TEXT, is_ranking=True, extra_action=None):
             super().__init__()
             self.title = title
             self.icon = icon
@@ -166,6 +267,7 @@ def RankingView(page: ft.Page):
             self.current_page = 1
             self.title_color = title_color
             self.is_ranking = is_ranking
+            self.extra_action = extra_action
             
             self.total_pages = math.ceil(len(self.all_data) / self.items_per_page) if self.all_data else 1
             
@@ -182,12 +284,18 @@ def RankingView(page: ft.Page):
 
             self.update_list_view()
             
+            header_controls = [
+                ft.Icon(self.icon, color=self.title_color),
+                ft.Text(self.title, size=20, weight=ft.FontWeight.BOLD, color=self.title_color),
+            ]
+            
+            if self.extra_action:
+                header_controls.append(ft.Container(expand=True)) # Spacer
+                header_controls.append(self.extra_action)
+
             self.content = ft.Column(
                 [
-                    ft.Row([
-                        ft.Icon(self.icon, color=self.title_color),
-                        ft.Text(self.title, size=20, weight=ft.FontWeight.BOLD, color=self.title_color)
-                    ]),
+                    ft.Row(header_controls, alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                     ft.Divider(color=self.title_color if self.title_color != AppColors.TEXT else AppColors.TEXT_SECONDARY),
                     
                     ft.Container(content=self.list_column, expand=True),
@@ -270,6 +378,14 @@ def RankingView(page: ft.Page):
         title_color=AppColors.PRIMARY
     )
 
+    # Botão de Download da Playlist
+    download_btn = ft.IconButton(
+        icon=ft.Icons.DOWNLOAD,
+        tooltip="Baixar Playlist (.bplist)",
+        icon_color=AppColors.SECONDARY,
+        on_click=download_playlist,
+    )
+
     maps_col = PaginatedSection(
         title="Mapas Ranqueados",
         icon=ft.Icons.MAP,
@@ -277,7 +393,8 @@ def RankingView(page: ft.Page):
         item_creator_func=create_map_item,
         items_per_page=6,
         title_color=AppColors.SECONDARY,
-        is_ranking=False
+        is_ranking=False,
+        extra_action=download_btn # Adiciona o botão aqui
     )
 
     # Adiciona um botão de refresh manual ou info de última atualização
