@@ -1,22 +1,22 @@
 import os
-
 import flet as ft
 from app.colors import AppColors
 from app.views.home_view import HomeView
 from app.views.ranking_view import RankingView
 from app.views.player_view import PlayerView
 from app.views.stars_ranking_view import StarsRankingView
-from app.views.championship_view import ChampionshipsPublicView  # Importa a nova view
+from app.views.championship_view import ChampionshipsPublicView
+from app.views.login_view import LoginView # Importa a nova view de login
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
 from app.data.data_manager import DataManager
+from app.auth.auth_context import AuthContext
+from app.auth.auth_service import AuthService # Importa o serviço de autenticação
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-
 from threading import Thread
-
 import uvicorn
 
 def main(page: ft.Page):
@@ -25,39 +25,32 @@ def main(page: ft.Page):
     page.padding = 0
     page.bgcolor = AppColors.BACKGROUND
 
-    # Inicializa o Banco de Dados
     init_db()
-
-    # Inicia o gerenciador de dados em background (Cache + Auto Update)
+    
+    # Garante que o admin padrão exista
+    AuthService.ensure_admin_exists()
+    
     DataManager.start_background_updater()
 
-    # Configura o Drawer (Menu lateral para mobile)
-    page.drawer = AppDrawer(page)
-
-    # Cria a barra de navegação e atribui à propriedade appbar da página
-    app_bar = NavBar(page)
-    page.appbar = app_bar
-
-    # Container principal que vai receber o conteúdo das views
     content_area = ft.Container(expand=True)
 
-    # Função para lidar com redimensionamento da janela
     def page_resize(e):
-        is_mobile = page.width < 768
-        
-        if app_bar.title:
-            app_bar.title.visible = not is_mobile
-            
-        if len(app_bar.actions) >= 2:
-            app_bar.actions[0].visible = is_mobile
-            app_bar.actions[1].visible = not is_mobile
-
+        # A lógica de redimensionamento precisa ser mais robusta agora que a appbar é dinâmica
+        if page.appbar and len(page.appbar.actions) >= 2:
+            is_mobile = page.width < 768
+            page.appbar.actions[0].visible = is_mobile
+            # O container fantasma pode precisar de ajuste, mas vamos simplificar por agora
+            # page.appbar.actions[2].visible = not is_mobile
         page.update()
 
     page.on_resized = page_resize
 
-    # Sistema de Rotas
     def route_change(e):
+        # Reconstruir AppBar e Drawer a cada mudança de rota
+        # para refletir o estado de login.
+        page.appbar = NavBar(page)
+        page.drawer = AppDrawer(page)
+        
         troute = ft.TemplateRoute(page.route)
         
         if troute.match("/"):
@@ -66,26 +59,32 @@ def main(page: ft.Page):
             content_area.content = RankingView(page)
         elif troute.match("/stars"):
             content_area.content = StarsRankingView(page)
-        elif troute.match("/championships"):  # Adiciona a nova rota
+        elif troute.match("/championships"):
             content_area.content = ChampionshipsPublicView()
         elif troute.match("/player/:player_id"):
-            # Extrai o ID da rota e passa para a view
             player_id = troute.player_id
             content_area.content = PlayerView(page, player_id)
+        elif troute.match("/admin"):
+            if AuthContext.is_admin(page):
+                content_area.content = ft.Container(
+                    content=ft.Text("Área Administrativa", size=30),
+                    alignment=ft.alignment.center
+                )
+            else:
+                content_area.content = ft.Container(
+                    content=ft.Text("Acesso Negado", size=30, color=AppColors.ERROR),
+                    alignment=ft.alignment.center
+                )
+        elif troute.match("/login"):
+            content_area.content = LoginView(page)
         else:
             content_area.content = HomeView(page)
             
         page.update()
 
     page.on_route_change = route_change
-
-    # Adiciona apenas a área de conteúdo à página
     page.add(content_area)
-    
-    # Força a navegação inicial para a Home
     page.go("/")
-    
-    # Chama o resize uma vez para ajustar o estado inicial
     page_resize(None)
 
 fastapi_app = FastAPI()
@@ -93,10 +92,6 @@ fastapi_app = FastAPI()
 @fastapi_app.get("/download/bsbr-playlist")
 def download_bsbr_playlist():
     filepath = os.path.join("assets", "bsbr_ranked.bplist")
-    return FileResponse(
-        path=filepath,
-        media_type="application/octet-stream",
-        filename="bsbr_ranked.bplist"
-    )
+    return FileResponse(path=filepath, media_type="application/octet-stream", filename="bsbr_ranked.bplist")
 
 ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=9598, assets_dir="assets")

@@ -32,5 +32,7 @@ def init_db():
     from app.data.models.player_score import PlayerScore
     # Importar models de campeonato
     import app.models.championship
+    # Importar model de usuário
+    import app.models.user
 
     Base.metadata.create_all(bind=engine)
