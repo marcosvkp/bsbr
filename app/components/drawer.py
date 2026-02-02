@@ -10,13 +10,15 @@ def AppDrawer(page: ft.Page):
             page.go("/")
         elif idx == 1: # Ranking
             page.go("/ranking")
-        elif idx == 2: # Discord
+        elif idx == 2: # Star Ranking
             page.go("/stars")
-        elif idx == 3: # Discord
+        elif idx == 3: # Campeonatos
+            page.go("/championships")
+        elif idx == 4: # Discord
             page.launch_url(AppConfig.DISCORD_LINK)
             e.control.selected_index = -1
             page.update()
-        elif idx == 4: # Sobre
+        elif idx == 5: # Sobre
             page.go("/about")
             pass
             
@@ -29,29 +31,34 @@ def AppDrawer(page: ft.Page):
             ft.NavigationDrawerDestination(
                 label="Inicio",
                 icon=ft.Icons.HOME_OUTLINED,
-                selected_icon=ft.Icons.HOME, # Corrigido: selected_icon_content -> selected_icon
+                selected_icon=ft.Icons.HOME,
             ),
             ft.Divider(thickness=2),
             ft.NavigationDrawerDestination(
                 label="Ranking",
                 icon=ft.Icons.LEADERBOARD_OUTLINED,
-                selected_icon=ft.Icons.LEADERBOARD, # Corrigido
+                selected_icon=ft.Icons.LEADERBOARD,
             ),
             ft.NavigationDrawerDestination(
                 label="Star Ranking",
                 icon=ft.Icons.STAR,
-                selected_icon=ft.Icons.LEADERBOARD,  # Corrigido
+                selected_icon=ft.Icons.LEADERBOARD,
+            ),
+            ft.NavigationDrawerDestination(
+                label="Campeonatos",
+                icon=ft.Icons.EMOJI_EVENTS_OUTLINED,
+                selected_icon=ft.Icons.EMOJI_EVENTS,
             ),
             ft.NavigationDrawerDestination(
                 label="Discord",
                 icon=ft.Icons.DISCORD, 
-                selected_icon=ft.Icons.DISCORD, # Corrigido
+                selected_icon=ft.Icons.DISCORD,
             ),
             ft.Divider(thickness=2),
             ft.NavigationDrawerDestination(
                 label="Sobre",
                 icon=ft.Icons.INFO_OUTLINED,
-                selected_icon=ft.Icons.INFO, # Corrigido
+                selected_icon=ft.Icons.INFO,
             ),
         ],
         bgcolor=AppColors.SURFACE,
