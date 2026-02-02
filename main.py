@@ -6,13 +6,15 @@ from app.views.ranking_view import RankingView
 from app.views.player_view import PlayerView
 from app.views.stars_ranking_view import StarsRankingView
 from app.views.championship_view import ChampionshipsPublicView
-from app.views.login_view import LoginView # Importa a nova view de login
+from app.views.login_view import LoginView
+from app.views.admin_view import AdminView
+from app.views.profile_view import ProfileView
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
 from app.data.data_manager import DataManager
 from app.auth.auth_context import AuthContext
-from app.auth.auth_service import AuthService # Importa o serviço de autenticação
+from app.auth.auth_service import AuthService
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -26,33 +28,26 @@ def main(page: ft.Page):
     page.bgcolor = AppColors.BACKGROUND
 
     init_db()
-    
-    # Garante que o admin padrão exista
     AuthService.ensure_admin_exists()
-    
     DataManager.start_background_updater()
 
-    content_area = ft.Container(expand=True)
+    content_area = ft.Container(expand=True, alignment=ft.alignment.top_left)
 
     def page_resize(e):
-        # A lógica de redimensionamento precisa ser mais robusta agora que a appbar é dinâmica
         if page.appbar and len(page.appbar.actions) >= 2:
             is_mobile = page.width < 768
             page.appbar.actions[0].visible = is_mobile
-            # O container fantasma pode precisar de ajuste, mas vamos simplificar por agora
-            # page.appbar.actions[2].visible = not is_mobile
         page.update()
 
-    page.on_resized = page_resize
-
     def route_change(e):
-        # Reconstruir AppBar e Drawer a cada mudança de rota
-        # para refletir o estado de login.
         page.appbar = NavBar(page)
         page.drawer = AppDrawer(page)
         
         troute = ft.TemplateRoute(page.route)
         
+        # Reset alignment by default
+        content_area.alignment = ft.alignment.top_left
+
         if troute.match("/"):
             content_area.content = HomeView(page)
         elif troute.match("/ranking"):
@@ -66,16 +61,19 @@ def main(page: ft.Page):
             content_area.content = PlayerView(page, player_id)
         elif troute.match("/admin"):
             if AuthContext.is_admin(page):
-                content_area.content = ft.Container(
-                    content=ft.Text("Área Administrativa", size=30),
-                    alignment=ft.alignment.center
-                )
+                content_area.content = AdminView(page)
             else:
-                content_area.content = ft.Container(
-                    content=ft.Text("Acesso Negado", size=30, color=AppColors.ERROR),
-                    alignment=ft.alignment.center
-                )
+                content_area.alignment = ft.alignment.center
+                content_area.content = ft.Text("Acesso Negado", size=30, color=AppColors.ERROR)
+        elif troute.match("/profile"):
+            if AuthContext.is_logged_in(page):
+                content_area.alignment = ft.alignment.center
+                content_area.content = ProfileView(page)
+            else:
+                content_area.alignment = ft.alignment.center
+                content_area.content = ft.Text("Acesso Negado. Faça login para ver seu perfil.", size=20, color=AppColors.ERROR)
         elif troute.match("/login"):
+            content_area.alignment = ft.alignment.center
             content_area.content = LoginView(page)
         else:
             content_area.content = HomeView(page)

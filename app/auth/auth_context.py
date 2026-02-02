@@ -1,6 +1,7 @@
 from typing import Optional
 import flet as ft
-from app.models.user import User
+from app.models.user import User, UserRole
+from app.data.database import get_db
 
 class AuthContext:
     """
@@ -11,12 +12,10 @@ class AuthContext:
     @staticmethod
     def login(page: ft.Page, user: User):
         """
-        Realiza o login, armazenando os dados do usuário na sessão.
+        Realiza o login, armazenando o ID do usuário na sessão.
         """
         page.session.set("user.id", user.id)
-        page.session.set("user.username", user.username)
-        page.session.set("user.role", user.role)
-        print(f"AuthContext: Usuário '{user.username}' logado com sucesso.")
+        print(f"AuthContext: Usuário ID '{user.id}' logado com sucesso.")
 
     @staticmethod
     def logout(page: ft.Page):
@@ -24,25 +23,26 @@ class AuthContext:
         Realiza o logout, limpando os dados do usuário da sessão.
         """
         page.session.remove("user.id")
-        page.session.remove("user.username")
-        page.session.remove("user.role")
         print("AuthContext: Usuário deslogado.")
         page.go("/") # Redireciona para a home após o logout
 
     @staticmethod
     def get_user(page: ft.Page) -> Optional[User]:
         """
-        Recupera o objeto User da sessão, se o usuário estiver logado.
+        Recupera o objeto User completo do banco de dados,
+        com base no ID armazenado na sessão.
         """
         user_id = page.session.get("user.id")
         if not user_id:
             return None
         
-        return User(
-            id=user_id,
-            username=page.session.get("user.username"),
-            role=page.session.get("user.role")
-        )
+        db = next(get_db())
+        try:
+            # Busca o usuário completo no banco de dados
+            user = db.query(User).filter(User.id == user_id).first()
+            return user
+        finally:
+            db.close()
 
     @staticmethod
     def is_logged_in(page: ft.Page) -> bool:
@@ -52,6 +52,7 @@ class AuthContext:
     @staticmethod
     def is_admin(page: ft.Page) -> bool:
         """Verifica se o usuário logado tem a role 'admin'."""
-        if not AuthContext.is_logged_in(page):
+        user = AuthContext.get_user(page)
+        if not user:
             return False
-        return page.session.get("user.role") == "admin"
+        return user.role == UserRole.ADMIN

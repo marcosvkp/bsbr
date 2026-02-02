@@ -8,7 +8,7 @@ class LoginView(ft.Column):
         super().__init__()
         self.page = page
         self.expand = True
-        self.alignment = ft.MainAxisAlignment.CENTER
+        self.alignment = ft.MainAxisAlignment.CENTER # Centraliza o conteúdo na página
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         # Estado
