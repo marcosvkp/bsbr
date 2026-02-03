@@ -1,6 +1,7 @@
 import flet as ft
 from app.colors import AppColors
 from app.data.data_manager import DataManager
+from app.scorecalc import get_pp, get_total_weighted_pp
 import math
 
 def PlayerView(page: ft.Page, player_id: str):
@@ -202,6 +203,97 @@ def PlayerView(page: ft.Page, player_id: str):
                 self.update_view()
                 self.update()
 
+    # --- +1pp Calculator ---
+    stars_input = ft.TextField(
+        label="Estrelas",
+        width=150,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"[0-9.]"),
+        border_color=AppColors.PRIMARY
+    )
+    acc_input = ft.TextField(
+        label="Precisão (%)",
+        width=150,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"[0-9.]"),
+        border_color=AppColors.PRIMARY
+    )
+    result_text = ft.Text(value="", size=16, color=AppColors.PRIMARY, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER)
+
+    def calculate_click(e):
+        try:
+            stars_str = stars_input.value
+            acc_str = acc_input.value
+
+            if not stars_str or not acc_str:
+                result_text.value = "Erro: Preencha ambos os campos."
+                result_text.update()
+                return
+
+            stars = float(stars_str)
+            acc = float(acc_str)
+
+            if not (0 <= acc <= 100):
+                result_text.value = "Erro: Precisão deve ser entre 0 e 100."
+                result_text.update()
+                return
+            
+            # Usa a função do módulo scorecalc
+            raw_pp = get_pp(stars, acc)
+
+            # Cálculo do ganho de PP ponderado usando scorecalc
+            current_pp_list = sorted([s['pp'] for s in scores], reverse=True)
+            current_total_pp = get_total_weighted_pp(current_pp_list)
+            
+            new_pp_list = sorted(current_pp_list + [raw_pp], reverse=True)
+            new_total_pp = get_total_weighted_pp(new_pp_list)
+
+            pp_gain = new_total_pp - current_total_pp
+            
+            weighted_pp_of_new_score = 0
+            try:
+                new_score_index = new_pp_list.index(raw_pp)
+                # O peso é 0.965 ^ index
+                weighted_pp_of_new_score = raw_pp * (0.965 ** new_score_index)
+            except ValueError:
+                pass
+
+            result_text.value = f"Raw PP: {raw_pp:.2f} | Ganho: +{pp_gain:.2f}pp | Ponderado: {weighted_pp_of_new_score:.2f}pp"
+
+        except (ValueError, TypeError):
+            result_text.value = "Erro: Insira valores numéricos válidos."
+        
+        result_text.update()
+
+    calculator_section = ft.Container(
+        content=ft.Column(
+            [
+                ft.Text("+1pp Calculator", size=20, weight=ft.FontWeight.BOLD, color=AppColors.TEXT),
+                ft.Text("Calcule o ganho de PP estimado para um novo score.", color=AppColors.TEXT_SECONDARY, size=14),
+                ft.Container(height=10),
+                ft.Row(
+                    [stars_input, acc_input],
+                    spacing=10,
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+                ft.ElevatedButton(
+                    "Calcular",
+                    on_click=calculate_click,
+                    icon=ft.Icons.CALCULATE_OUTLINED,
+                    bgcolor=AppColors.PRIMARY,
+                    color=AppColors.TEXT
+                ),
+                ft.Container(height=10),
+                result_text,
+            ],
+            spacing=10,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        ),
+        padding=ft.padding.only(top=20, bottom=20),
+        alignment=ft.alignment.center,
+        border=ft.border.all(1, AppColors.SURFACE),
+        border_radius=8,
+        margin=ft.margin.only(top=20)
+    )
+
     # --- Layout Final da Página ---
     return ft.Container(
         content=ft.Column(
@@ -211,10 +303,11 @@ def PlayerView(page: ft.Page, player_id: str):
                 ft.Divider(color=AppColors.SURFACE),
                 ft.Text("Mapas Brasileiros Jogados", size=20, weight=ft.FontWeight.BOLD, color=AppColors.TEXT),
                 ft.Container(height=10),
-                PaginatedScores(scores)
+                PaginatedScores(scores),
+                calculator_section,
             ],
             expand=True,
-            scroll=ft.ScrollMode.AUTO # Adiciona scroll à coluna principal
+            scroll=ft.ScrollMode.AUTO
         ),
         padding=20
     )
