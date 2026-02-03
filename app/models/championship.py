@@ -27,11 +27,6 @@ class MatchStatus(enum.Enum):
     COMPLETED = "Concluída"
     CANCELLED = "Cancelada"
 
-class ParticipantStatus(enum.Enum):
-    PENDING = "Pendente"
-    APPROVED = "Aprovado"
-    REJECTED = "Rejeitado"
-
 # --- Modelos SQLAlchemy ---
 
 class Championship(Base):
@@ -55,14 +50,9 @@ class ChampionshipParticipant(Base):
     id = Column(Integer, primary_key=True, index=True)
     championship_id = Column(Integer, ForeignKey("championships.id"))
     player_id = Column(String, index=True) # ScoreSaber ID (String)
-    player_name = Column(String, nullable=True) # Cache do nome
+    player_name = Column(String, nullable=True) # Cache do nome para exibição rápida
     
     final_rank = Column(Integer, nullable=True)
-    
-    # Novos campos para gestão de inscrição e check-in
-    status = Column(SqlEnum(ParticipantStatus), default=ParticipantStatus.APPROVED)
-    checked_in = Column(Boolean, default=False)
-    checked_in_at = Column(DateTime, nullable=True)
 
     championship = relationship("Championship", back_populates="participants")
     matches_as_p1 = relationship("Match", foreign_keys="[Match.participant1_id]", back_populates="participant1")

@@ -15,10 +15,7 @@ class AppColors:
     TEXT = "#FFFFFF"
     TEXT_SECONDARY = "#B0BEC5"
 
-    # Status Colors
-    ERROR = "#D32F2F"      # Vermelho para erros
-    WARNING = "#FFA000"    # Laranja/Âmbar para avisos
-    SUCCESS = "#388E3C"    # Verde para sucesso
+    ERROR = "#FFFFFF"
     
     # Mantendo compatibilidade com nomes antigos se necessário, ou atualizando
     # Vamos usar PRIMARY e SECONDARY nas views

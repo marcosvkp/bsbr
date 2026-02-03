@@ -48,13 +48,13 @@ def NavBar(page: ft.Page):
                 ft.Icon(ft.Icons.ARROW_DROP_DOWN, color=AppColors.TEXT)
             ]),
             items=[
-                ft.PopupMenuItem(text="Meu Perfil", icon=ft.Icons.PERSON, on_click=lambda _: page.go("/profile")),
                 ft.PopupMenuItem(text="Logout", icon=ft.Icons.LOGOUT, on_click=handle_logout),
             ]
         )
         user_controls.append(user_menu)
     else:
         # Botão de Login para usuário não logado
+        # Para demonstração, o login será simulado no main.py
         user_controls.append(
             ft.TextButton("Login", on_click=lambda _: page.go("/login"), style=ft.ButtonStyle(color=AppColors.TEXT))
         )
@@ -79,8 +79,8 @@ def NavBar(page: ft.Page):
         bgcolor=AppColors.SURFACE,
         actions=[
             menu_icon,
-            ft.Row(user_controls, alignment=ft.MainAxisAlignment.END),
-            ft.Container(width=180, visible=True)
+            ft.Row(user_controls, alignment=ft.MainAxisAlignment.END), # Controles de usuário aqui
+            ft.Container(width=180, visible=True) # Ajuste no container fantasma
         ],
     )
     
