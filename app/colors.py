@@ -14,8 +14,6 @@ class AppColors:
     # Text
     TEXT = "#FFFFFF"
     TEXT_SECONDARY = "#B0BEC5"
-
-    ERROR = "#FFFFFF"
     
     # Mantendo compatibilidade com nomes antigos se necessário, ou atualizando
     # Vamos usar PRIMARY e SECONDARY nas views

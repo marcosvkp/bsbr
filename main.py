@@ -6,7 +6,6 @@ from app.views.home_view import HomeView
 from app.views.ranking_view import RankingView
 from app.views.player_view import PlayerView
 from app.views.stars_ranking_view import StarsRankingView
-from app.views.championship_view import ChampionshipsPublicView  # Importa a nova view
 from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
@@ -14,10 +13,6 @@ from app.data.data_manager import DataManager
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-
-from threading import Thread
-
-import uvicorn
 
 def main(page: ft.Page):
     page.title = "BeatSaber Brasil"
@@ -66,8 +61,6 @@ def main(page: ft.Page):
             content_area.content = RankingView(page)
         elif troute.match("/stars"):
             content_area.content = StarsRankingView(page)
-        elif troute.match("/championships"):  # Adiciona a nova rota
-            content_area.content = ChampionshipsPublicView()
         elif troute.match("/player/:player_id"):
             # Extrai o ID da rota e passa para a view
             player_id = troute.player_id
@@ -99,4 +92,4 @@ def download_bsbr_playlist():
         filename="bsbr_ranked.bplist"
     )
 
-ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=9598, assets_dir="assets")
+ft.app(target=main, assets_dir="assets")
