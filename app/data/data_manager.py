@@ -122,7 +122,7 @@ class DataManager:
                 )
                 .all()
             )
-            maps_lookup = {m.leaderboard_id: {"leaderboard_id": m.leaderboard_id, "name": m.map_name, "diff": m.difficulty.replace("Plus", "+") if m.difficulty else "?", "stars": f"{m.stars:.2f}★", "cover_image": m.cover_image} for m in maps_db}
+            maps_lookup = {m.leaderboard_id: {"leaderboard_id": m.leaderboard_id, "id": m.map_id, "name": m.map_name, "diff": m.difficulty.replace("Plus", "+") if m.difficulty else "?", "stars": f"{m.stars:.2f}★", "cover_image": m.cover_image} for m in maps_db}
             new_maps = list(maps_lookup.values())
             db.close()
 
