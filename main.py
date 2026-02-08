@@ -17,7 +17,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 def main(page: ft.Page):
-    page.title = "BeatSaber Brasil"
+    page.title = "BSBR — Beat Saber Brasil Ranking"
+    page.description = "Ranking brasileiro de Beat Saber, mapas, jogadores e performance nacional."
     page.window_icon = "favicon.png"
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 0
