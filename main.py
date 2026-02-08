@@ -1,6 +1,8 @@
 import os
 
 import flet as ft
+from flet.core.types import AppView
+
 from app.colors import AppColors
 from app.views.home_view import HomeView
 from app.views.ranking_view import RankingView
@@ -16,6 +18,7 @@ from fastapi.responses import FileResponse
 
 def main(page: ft.Page):
     page.title = "BeatSaber Brasil"
+    page.window_icon = "favicon.png"
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 0
     page.bgcolor = AppColors.BACKGROUND
@@ -81,15 +84,5 @@ def main(page: ft.Page):
     # Chama o resize uma vez para ajustar o estado inicial
     page_resize(None)
 
-fastapi_app = FastAPI()
-
-@fastapi_app.get("/download/bsbr-playlist")
-def download_bsbr_playlist():
-    filepath = os.path.join("assets", "bsbr_ranked.bplist")
-    return FileResponse(
-        path=filepath,
-        media_type="application/octet-stream",
-        filename="bsbr_ranked.bplist"
-    )
-
-ft.app(target=main, assets_dir="assets")
+if __name__ == "__main__":
+    ft.app(target=main, assets_dir="assets", view=AppView.FLET_APP, port=8080)
