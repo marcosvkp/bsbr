@@ -8,6 +8,7 @@ from app.data.models.ranked_br_maps import RankedBRMaps
 from app.data.models.player_score import PlayerScore
 from collections import defaultdict
 from sqlalchemy.orm import Session
+from decimal import Decimal, InvalidOperation
 
 class DataManager:
     # Cache em memória
@@ -61,23 +62,40 @@ class DataManager:
         """Salva ou atualiza scores no banco de dados."""
         db = next(get_db())
         try:
-            # Para otimizar, vamos usar merge ou verificar existência
-            # Como a lista pode ser grande, vamos fazer em batch se necessário
-            # Mas o SQLAlchemy lida bem com merge
-            
             for s in scores_list:
-                # Cria objeto PlayerScore
-                # Verifica se já existe (player_id + leaderboard_id)
+                # --- Lógica de atualização de estrelas para RankedBRMaps ---
+                map_in_br_ranked = db.query(RankedBRMaps).filter_by(leaderboard_id=str(s["leaderboard_id"])).first()
+                
+                if map_in_br_ranked:
+                    try:
+                        # s['stars'] vem como "X.XX★" ou apenas o número da API
+                        api_stars_str = str(s['stars']).replace('★', '')
+                        api_stars_decimal = Decimal(api_stars_str)
+                        
+                        # Compara com uma pequena tolerância para evitar atualizações desnecessárias
+                        if api_stars_decimal > 0 and not isinstance(map_in_br_ranked.stars, Decimal):
+                             map_in_br_ranked.stars = Decimal(str(map_in_br_ranked.stars))
+
+                        if api_stars_decimal > 0 and not math.isclose(map_in_br_ranked.stars, api_stars_decimal, rel_tol=1e-5):
+                            print(f"DataManager: Atualizando estrelas para o mapa '{map_in_br_ranked.map_name}' de {map_in_br_ranked.stars} para {api_stars_decimal}")
+                            map_in_br_ranked.stars = api_stars_decimal
+                            
+                    except (InvalidOperation, ValueError, TypeError):
+                        # Ignora se o valor de estrelas da API for inválido
+                        pass
+
+                # --- Lógica de atualização de PlayerScore ---
                 existing = db.query(PlayerScore).filter_by(player_id=player_id, leaderboard_id=s["leaderboard_id"]).first()
                 
                 if existing:
-                    # Atualiza se o PP ou Score melhorou
+                    # Atualiza se o Score melhorou
                     if s["score"] > existing.score:
                         existing.pp = s["pp"]
                         existing.score = s["score"]
                         existing.acc = s["acc"]
                         existing.map_rank = s["map_rank"]
-                        # Atualiza outros campos se necessário
+                    
+                    # Sempre atualiza as estrelas se estiverem diferentes
                     if s["stars"] != existing.stars:
                         existing.stars = s["stars"]
                 else:
@@ -268,3 +286,4 @@ class DataManager:
             "profile_picture": ss_info["profilePicture"]
         }
         return player_profile
+import math
