@@ -78,6 +78,8 @@ class DataManager:
                         existing.acc = s["acc"]
                         existing.map_rank = s["map_rank"]
                         # Atualiza outros campos se necessário
+                    if s["stars"] != existing.stars:
+                        existing.stars = s["stars"]
                 else:
                     new_score = PlayerScore(
                         player_id=player_id,
