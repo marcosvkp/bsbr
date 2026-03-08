@@ -257,19 +257,21 @@ def RankingView(page: ft.Page):
 
     # --- Lógica de Paginação ---
     class PaginatedSection(ft.Container):
-        def __init__(self, title, icon, data, item_creator_func, items_per_page=10, title_color=AppColors.TEXT, is_ranking=True, extra_action=None):
+        def __init__(self, title, icon, data, item_creator_func, items_per_page=10, title_color=AppColors.TEXT, is_ranking=True, extra_action=None, enable_search=False):
             super().__init__()
             self.title = title
             self.icon = icon
-            self.all_data = data
+            self.all_data = data if data is not None else []
+            self.filtered_data = self.all_data
             self.item_creator = item_creator_func
             self.items_per_page = items_per_page
             self.current_page = 1
             self.title_color = title_color
             self.is_ranking = is_ranking
             self.extra_action = extra_action
+            self.enable_search = enable_search
             
-            self.total_pages = math.ceil(len(self.all_data) / self.items_per_page) if self.all_data else 1
+            self.total_pages = math.ceil(len(self.filtered_data) / self.items_per_page) if self.filtered_data else 1
             
             self.list_column = ft.Column(spacing=5, scroll=ft.ScrollMode.AUTO)
             self.page_info = ft.Text(f"Página 1/{self.total_pages}", size=12, color=AppColors.TEXT_SECONDARY)
@@ -289,8 +291,24 @@ def RankingView(page: ft.Page):
                 ft.Text(self.title, size=20, weight=ft.FontWeight.BOLD, color=self.title_color),
             ]
             
+            if self.enable_search:
+                self.search_field = ft.TextField(
+                    hint_text="Buscar jogador...",
+                    height=30,
+                    width=150,
+                    text_size=12,
+                    content_padding=ft.padding.only(left=10, right=10, bottom=10),
+                    border_radius=15,
+                    on_change=self.filter_data,
+                    bgcolor=AppColors.BACKGROUND,
+                    border_color=AppColors.TEXT_SECONDARY
+                )
+                header_controls.append(ft.Container(expand=True))
+                header_controls.append(self.search_field)
+
             if self.extra_action:
-                header_controls.append(ft.Container(expand=True)) # Spacer
+                if not self.enable_search:
+                     header_controls.append(ft.Container(expand=True))
                 header_controls.append(self.extra_action)
 
             self.content = ft.Column(
@@ -313,24 +331,45 @@ def RankingView(page: ft.Page):
                 ]
             )
 
+        def filter_data(self, e):
+            search_term = e.control.value.lower()
+            if not search_term:
+                self.filtered_data = self.all_data
+            else:
+                self.filtered_data = [
+                    item for item in self.all_data 
+                    if search_term in item.get("name", "").lower()
+                ]
+            
+            self.current_page = 1
+            self.total_pages = math.ceil(len(self.filtered_data) / self.items_per_page) if self.filtered_data else 1
+            self.update_list_view()
+            self.content.update()
+
         def update_list_view(self):
-            if not self.all_data:
-                msg = "Carregando dados..." if DataManager.is_loading else "Nenhum dado encontrado."
+            if not self.filtered_data:
+                msg = "Nenhum jogador encontrado." if hasattr(self, 'search_field') and self.search_field.value else "Carregando dados..."
+                if not self.all_data and DataManager.is_loading:
+                    msg = "Carregando dados..."
+                
                 self.list_column.controls = [
                     ft.Container(
                         content=ft.Column([
-                            ft.ProgressRing() if DataManager.is_loading else ft.Icon(ft.Icons.WARNING_AMBER, color=AppColors.TEXT_SECONDARY),
+                            ft.ProgressRing() if msg == "Carregando dados..." else ft.Icon(ft.Icons.WARNING_AMBER, color=AppColors.TEXT_SECONDARY),
                             ft.Text(msg, color=AppColors.TEXT_SECONDARY)
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                         alignment=ft.alignment.center,
                         padding=20
                     )
                 ]
+                self.page_info.value = "Página 0/0"
+                self.btn_prev.disabled = True
+                self.btn_next.disabled = True
                 return
 
             start = (self.current_page - 1) * self.items_per_page
             end = start + self.items_per_page
-            current_items = self.all_data[start:end]
+            current_items = self.filtered_data[start:end]
             
             self.list_column.controls.clear()
             for item in current_items:
@@ -366,7 +405,8 @@ def RankingView(page: ft.Page):
         data=scoresaber_data,
         item_creator_func=create_ranking_item,
         items_per_page=8,
-        title_color=AppColors.TEXT
+        title_color=AppColors.TEXT,
+        enable_search=True
     )
 
     bsbr_col = PaginatedSection(
@@ -375,7 +415,8 @@ def RankingView(page: ft.Page):
         data=bsbr_data,
         item_creator_func=create_ranking_item,
         items_per_page=8,
-        title_color=AppColors.PRIMARY
+        title_color=AppColors.PRIMARY,
+        enable_search=True
     )
 
     # Botão de Download da Playlist
@@ -394,7 +435,8 @@ def RankingView(page: ft.Page):
         items_per_page=6,
         title_color=AppColors.SECONDARY,
         is_ranking=False,
-        extra_action=download_btn # Adiciona o botão aqui
+        extra_action=download_btn,
+        enable_search=False
     )
 
     # Adiciona um botão de refresh manual ou info de última atualização

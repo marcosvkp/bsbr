@@ -101,14 +101,15 @@ class ScoreSaberAPI:
         return all_players
 
     @staticmethod
-    def _fetch_page(leaderboard_id: int, country: str, page: int) -> List[Dict[str, Any]]:
+    def _fetch_page(leaderboard_id: int, country: str, page: int, limit: int = 100) -> List[Dict[str, Any]]:
         """
         Função auxiliar para buscar uma página específica.
         """
         url = f"{ScoreSaberAPI.BASE_URL}/leaderboard/by-id/{leaderboard_id}/scores"
         params = {
             "countries": country,
-            "page": page
+            "page": page,
+            "limit": limit
         }
         try:
             rate_limiter.wait()

@@ -1,6 +1,8 @@
+import asyncio
 import os
 
 import flet as ft
+from fastapi import FastAPI
 from flet.core.types import AppView
 
 from app.colors import AppColors
@@ -12,23 +14,23 @@ from app.components.app_bar import NavBar
 from app.components.drawer import AppDrawer
 from app.data.database import init_db
 from app.data.data_manager import DataManager
+from app import api, integration
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+application = FastAPI()
 
-def main(page: ft.Page):
+# Inicializa o Banco de Dados
+init_db()
+
+# Inicia o gerenciador de dados em background (Cache + Auto Update)
+DataManager.start_background_updater()
+
+def flet_app(page: ft.Page):
     page.title = "BSBR — Beat Saber Brasil Ranking"
     page.description = "Ranking brasileiro de Beat Saber, mapas, jogadores e performance nacional."
     page.window_icon = "favicon.png"
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 0
     page.bgcolor = AppColors.BACKGROUND
-
-    # Inicializa o Banco de Dados
-    init_db()
-
-    # Inicia o gerenciador de dados em background (Cache + Auto Update)
-    DataManager.start_background_updater()
 
     # Configura o Drawer (Menu lateral para mobile)
     page.drawer = AppDrawer(page)
@@ -85,5 +87,16 @@ def main(page: ft.Page):
     # Chama o resize uma vez para ajustar o estado inicial
     page_resize(None)
 
+
+app = ft.app(target=flet_app, assets_dir="assets", view=AppView.FLET_APP, port=8080, export_asgi_app=True)
+application.mount("/api", api.app)
+application.mount("/", app)
+
+
+@application.on_event("startup")
+async def startup():
+    pass
+
+
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets", view=AppView.FLET_APP, port=8080)
+    pass

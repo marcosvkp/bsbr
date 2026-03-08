@@ -15,6 +15,7 @@ class DataManager:
     scoresaber_data = []
     bsbr_data = []
     maps_data = []
+    maps_by_leaderboard = []
     player_details = {}
     global_scores_cache = {} # Cache para scores globais: {player_id: [scores]}
     
@@ -26,6 +27,7 @@ class DataManager:
     def start_background_updater(cls, interval_seconds=1800):
         # Carrega dados do banco ao iniciar
         cls.load_from_db()
+        cls.load_maps_from_db()
         
         def updater_loop():
             print("--- Iniciando atualização de dados em background ---")
@@ -36,6 +38,27 @@ class DataManager:
                 cls.update_all_data()
         thread = threading.Thread(target=updater_loop, daemon=True)
         thread.start()
+
+    @classmethod
+    def load_maps_from_db(cls):
+        db = next(get_db())
+        maps_db = (
+            db.query(RankedBRMaps)
+            .order_by(
+                RankedBRMaps.map_name.asc(),
+                RankedBRMaps.stars.desc()
+            )
+            .all()
+        )
+        maps_lookup = {m.leaderboard_id: {"leaderboard_id": m.leaderboard_id, "id": m.map_id, "maxscore": m.max_score,
+                                          "name": m.map_name,
+                                          "diff": m.difficulty.replace("Plus", "+") if m.difficulty else "?",
+                                          "stars": f"{m.stars:.2f}★", "cover_image": m.cover_image} for m in maps_db}
+        new_maps = list(maps_lookup.values())
+        db.close()
+        cls.maps_data = new_maps
+        cls.maps_by_leaderboard = {m["leaderboard_id"]: m for m in new_maps}
+
 
     @classmethod
     def load_from_db(cls):
@@ -142,7 +165,7 @@ class DataManager:
                 )
                 .all()
             )
-            maps_lookup = {m.leaderboard_id: {"leaderboard_id": m.leaderboard_id, "id": m.map_id, "name": m.map_name, "diff": m.difficulty.replace("Plus", "+") if m.difficulty else "?", "stars": f"{m.stars:.2f}★", "cover_image": m.cover_image} for m in maps_db}
+            maps_lookup = {m.leaderboard_id: {"leaderboard_id": m.leaderboard_id, "id": m.map_id, "maxscore": m.max_score, "name": m.map_name, "diff": m.difficulty.replace("Plus", "+") if m.difficulty else "?", "stars": f"{m.stars:.2f}★", "cover_image": m.cover_image} for m in maps_db}
             new_maps = list(maps_lookup.values())
             db.close()
 
@@ -204,11 +227,11 @@ class DataManager:
                 if has_data:
                     # Se já tem, busca apenas os RECENTES (ex: últimas 5 páginas ~ 400 scores)
                     # Isso deve cobrir as jogadas novas
-                    print(f"Atualizando recentes para {player['name']}...")
+                    #print(f"Atualizando recentes para {player['name']}...")
                     scores = ScoreSaberAPI.get_player_scores(pid, limit=100, max_pages=5, sort="recent")
                 else:
                     # Se não tem, busca TUDO (Top scores)
-                    print(f"Baixando TUDO para {player['name']}...")
+                    #print(f"Baixando TUDO para {player['name']}...")
                     scores = ScoreSaberAPI.get_player_scores(pid, limit=100, max_pages=None, sort="top")
                 
                 processed_scores = []
@@ -249,6 +272,7 @@ class DataManager:
                 cls.scoresaber_data = new_scoresaber
                 cls.bsbr_data = new_bsbr
                 cls.maps_data = new_maps
+                cls.maps_by_leaderboard = {m["leaderboard_id"]: m for m in new_maps}
                 cls.player_details = new_player_details
                 cls.last_updated = datetime.now()
                 cls.is_loading = False
